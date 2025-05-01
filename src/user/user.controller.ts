@@ -3,9 +3,13 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+
 @Controller('user')
+
+
 export class UserController {
   constructor(private readonly userService: UserService) {}
+  
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
@@ -32,3 +36,7 @@ export class UserController {
     return this.userService.remove(+id);
   }
 }
+function ApiSecurity(arg0: string): (target: typeof UserController) => void | typeof UserController {
+  throw new Error('Function not implemented.');
+}
+
