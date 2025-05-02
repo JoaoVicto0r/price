@@ -52,13 +52,13 @@ export class UserService {
       throw new Error ('Usuario não existe');
     }
 
-     return await this.prisma.user.update({
+     return  this.prisma.user.update({
        where: {id},
        data: updateUserDto,
     });
   }
 
-  async remove(id: number) {
+  async delete(id: number) {
     const existingUser = await this.prisma.user.findUnique({
       where: {id},
     });
