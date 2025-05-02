@@ -27,8 +27,8 @@ export class UserController {
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() CreateUserDto: CreateUserDto) {
-    return this.userService.update(Number(id), CreateUserDto);
+  update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(Number(id), updateUserDto);
   }
 
   @Delete(':id')

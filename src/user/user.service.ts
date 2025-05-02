@@ -38,7 +38,9 @@ export class UserService {
 
 
   async findOne(id: number) {
-    return await this.prisma.user.findMany();
+    return await this.prisma.user.findUnique({
+      where: {id},
+    });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -46,7 +48,7 @@ export class UserService {
       where: {id}
     });
 
-    if (existingUser) {
+    if (!existingUser) {
       throw new Error ('Usuario não existe');
     }
 
