@@ -38,9 +38,9 @@ export class UserService {
 
 
 
-  async findOne(id: number) {
+  async findOne(email: string) {
     return await this.prisma.user.findUnique({
-      where: {id},
+      where: {email},
     });
   }
 
