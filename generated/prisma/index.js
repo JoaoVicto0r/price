@@ -130,7 +130,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\Price\\backend\\price\\generated\\prisma",
+      "value": "C:\\Users\\Vekto\\Desktop\\git\\PADARIA\\price\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -144,7 +144,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\Price\\backend\\price\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\Vekto\\Desktop\\git\\PADARIA\\price\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -158,11 +158,12 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": "postgresql://postgres:root@localhost:5432/mydb?schema=public"
+        "value": null
       }
     }
   },
