@@ -13,14 +13,14 @@ export default function dashboardform() {
       </div>
 
       <div className="left-[1042px] top-[250px] absolute justify-start text-neutral-600 text-lg font-['Telegraf']">
-        {/* Aqui você pode listar as seções do dashboard 
+        {/* Aqui você pode listar as seções do dashboard */}
         <ul className="space-y-6">
           <li className="cursor-pointer hover:text-indigo-500">📊 Overview</li>
           <li className="cursor-pointer hover:text-indigo-500">💼 Projects</li>
           <li className="cursor-pointer hover:text-indigo-500">⚙️ Settings</li>
         </ul>
-        */}
-        <Header />
+        
+        
       </div>
 
       <div className="w-[575px] h-14 left-[1042px] top-[700px] absolute bg-indigo-500 rounded-lg">
