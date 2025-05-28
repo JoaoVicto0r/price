@@ -1,42 +1,84 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 
-
-@Controller('user')
-
-
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-  
 
+  @Public()
   @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll() {
+  findAll() {
     return this.userService.findAll();
   }
 
-  @Get(':email')
-  findOne(@Param('email') email: string) {
-    return this.userService.findOne(email);
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return this.userService.findOne(req.user.userId);
   }
 
-  @Put(':id')
+  @UseGuards(JwtAuthGuard)
+  @Get('stats')
+  getUserStats(@Request() req) {
+    return this.userService.getUserStats(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: number) {
+    return this.userService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(req.user.userId, updateUserDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
   update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(Number(id), updateUserDto);
+    return this.userService.update(id, updateUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
+    return this.userService.changePassword(
+      req.user.userId,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.delete(id);
+  remove(@Param('id') id: number) {
+    return this.userService.remove(id);
   }
 }
-function ApiSecurity(arg0: string): (target: typeof UserController) => void | typeof UserController {
-  throw new Error('Function not implemented.');
-}
-

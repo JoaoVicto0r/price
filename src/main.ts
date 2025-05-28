@@ -1,8 +1,44 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+
+  app.use(cookieParser());
+  console.log('✅ cookie-parser ativado');
+
+  // Configurar CORS
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://192.168.56.1:3000', 
+    ],
+    credentials: true,
+  });
+  console.log('✅ CORS configurado com credentials: true');
+
+  // Configurar validação global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  app.setGlobalPrefix('api');
+
+  const configService = app.get(ConfigService);
+  const port = configService.get('PORT') || 3333;
+
+  const jwtSecret = configService.get<string>('JWT_SECRET');
+  console.log('🔐 JWT_SECRET carregado no main.ts:', jwtSecret);
+
+  await app.listen(port);
+  console.log(`🚀 API rodando na porta ${port}`);
 }
 bootstrap();
