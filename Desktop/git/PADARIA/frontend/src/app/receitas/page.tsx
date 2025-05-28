@@ -1,82 +1,114 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Search, Filter, MoreHorizontal, Calculator, TrendingUp, AlertTriangle } from "lucide-react"
-
-// Simulando dados (substitua pela sua API/Prisma)
-const mockRecipes = [
-  {
-    id: 1,
-    name: "Pão Francês",
-    category: "Panificação",
-    costoProdução: 2.5,
-    precoVenda: 8.0,
-    margemLucro: 68.75,
-    custoOperacional: 1.2,
-    lucroLiquido: 4.3,
-    rendimento: "20 unidades",
-    status: "Ativa",
-  },
-  {
-    id: 2,
-    name: "Bolo de Chocolate",
-    category: "Confeitaria",
-    costoProdução: 12.8,
-    precoVenda: 35.0,
-    margemLucro: 63.43,
-    custoOperacional: 5.5,
-    lucroLiquido: 16.7,
-    rendimento: "1 bolo (8 fatias)",
-    status: "Ativa",
-  },
-  {
-    id: 3,
-    name: "Pizza Margherita",
-    category: "Salgados",
-    costoProdução: 8.9,
-    precoVenda: 28.0,
-    margemLucro: 68.21,
-    custoOperacional: 4.2,
-    lucroLiquido: 14.9,
-    rendimento: "1 pizza média",
-    status: "Ativa",
-  },
-  {
-    id: 4,
-    name: "Brigadeiro Gourmet",
-    category: "Doces",
-    costoProdução: 0.85,
-    precoVenda: 3.5,
-    margemLucro: 75.71,
-    custoOperacional: 0.4,
-    lucroLiquido: 2.25,
-    rendimento: "1 unidade",
-    status: "Inativa",
-  },
-  {
-    id: 5,
-    name: "Croissant",
-    category: "Panificação",
-    costoProdução: 1.8,
-    precoVenda: 6.5,
-    margemLucro: 72.31,
-    custoOperacional: 0.9,
-    lucroLiquido: 3.8,
-    rendimento: "1 unidade",
-    status: "Ativa",
-  },
-]
+import { Plus, Search, Filter, Calculator, TrendingUp, AlertTriangle, Edit, Trash2 } from "lucide-react"
+import { useRecipes } from "@/hooks/use-recipes"
+import { useAuth } from "@/hooks/use-auth"
+import { RecipeForm } from "@/components/recipes/recipe-form"
+import type { CreateRecipeData } from "@/lib/api"
 
 export default function ReceitasPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [recipes, setRecipes] = useState(mockRecipes)
+  const [showForm, setShowForm] = useState(false)
+  const [editingRecipe, setEditingRecipe] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const { user, isAuthenticated } = useAuth()
+  const { recipes, loading, createRecipe, updateRecipe, deleteRecipe } = useRecipes()
+
+  // Se não estiver autenticado, redirecionar para login
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
+        <div className="text-white text-xl tracking-wider">Redirecionando para login...</div>
+      </div>
+    )
+  }
 
   const filteredRecipes = recipes.filter(
     (recipe) =>
       recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.category.toLowerCase().includes(searchTerm.toLowerCase()),
+      (recipe.category?.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  const handleCreateRecipe = async (data: CreateRecipeData) => {
+    setIsSubmitting(true)
+    try {
+      await createRecipe(data)
+      setShowForm(false)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUpdateRecipe = async (data: CreateRecipeData) => {
+    if (!editingRecipe) return
+
+    setIsSubmitting(true)
+    try {
+      await updateRecipe(editingRecipe, data)
+      setEditingRecipe(null)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteRecipe = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta receita?")) {
+      try {
+        await deleteRecipe(id)
+      } catch (error) {
+        console.error("Erro ao excluir receita:", error)
+      }
+    }
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value)
+  }
+
+  const getDifficultyText = (difficulty: string) => {
+    switch (difficulty) {
+      case "EASY":
+        return "Fácil"
+      case "MEDIUM":
+        return "Médio"
+      case "HARD":
+        return "Difícil"
+      default:
+        return difficulty
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
+        <div className="text-white text-xl tracking-wider">Carregando receitas...</div>
+      </div>
+    )
+  }
+
+  if (showForm || editingRecipe) {
+    const recipeToEdit = editingRecipe ? recipes.find((r) => r.id === editingRecipe) : undefined
+    return (
+      <div className="space-y-8">
+        <RecipeForm
+          onSubmit={editingRecipe ? handleUpdateRecipe : handleCreateRecipe}
+          initialData={recipeToEdit}
+          loading={isSubmitting}
+          onCancel={() => {
+            setShowForm(false)
+            setEditingRecipe(null)
+          }}
+        />
+      </div>
+    )
+  }
+
+  // Resto do código permanece igual...
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -85,23 +117,28 @@ export default function ReceitasPage() {
           <h2 className="text-3xl font-extrabold text-white tracking-widest mb-2">Receitas Culinárias</h2>
           <p className="text-white/80 tracking-wider">Gerencie suas receitas e calcule custos e margens</p>
         </div>
-        <button className="bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold tracking-wider rounded-lg px-6 py-3 flex items-center gap-2 transition-colors">
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold tracking-wider rounded-lg px-6 py-3 flex items-center gap-2 transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Nova Receita
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards com dados reais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg border-0 shadow-lg p-6">
           <div className="pb-3">
             <h3 className="text-sm font-normal text-neutral-400 tracking-wider">Total de Receitas</h3>
           </div>
           <div>
-            <div className="text-2xl font-extrabold text-black tracking-wider">127</div>
+            <div className="text-2xl font-extrabold text-black tracking-wider">{recipes.length}</div>
             <div className="flex items-center mt-2">
               <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-              <span className="text-sm text-green-500 font-extrabold">+8 este mês</span>
+              <span className="text-sm text-green-500 font-extrabold">
+                {recipes.filter((r) => r.isActive).length} ativas
+              </span>
             </div>
           </div>
         </div>
@@ -111,10 +148,15 @@ export default function ReceitasPage() {
             <h3 className="text-sm font-normal text-neutral-400 tracking-wider">Margem Média</h3>
           </div>
           <div>
-            <div className="text-2xl font-extrabold text-black tracking-wider">68.5%</div>
+            <div className="text-2xl font-extrabold text-black tracking-wider">
+              {recipes.length > 0
+                ? (recipes.reduce((acc, r) => acc + r.profitMargin, 0) / recipes.length).toFixed(1)
+                : "0"}
+              %
+            </div>
             <div className="flex items-center mt-2">
               <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-              <span className="text-sm text-green-500 font-extrabold">+2.3%</span>
+              <span className="text-sm text-green-500 font-extrabold">Lucro médio</span>
             </div>
           </div>
         </div>
@@ -124,10 +166,14 @@ export default function ReceitasPage() {
             <h3 className="text-sm font-normal text-neutral-400 tracking-wider">Custo Médio</h3>
           </div>
           <div>
-            <div className="text-2xl font-extrabold text-black tracking-wider">R$ 6,19</div>
+            <div className="text-2xl font-extrabold text-black tracking-wider">
+              {recipes.length > 0
+                ? formatCurrency(recipes.reduce((acc, r) => acc + r.finalCost, 0) / recipes.length)
+                : "R$ 0,00"}
+            </div>
             <div className="flex items-center mt-2">
               <AlertTriangle className="w-4 h-4 text-yellow-500 mr-1" />
-              <span className="text-sm text-yellow-500 font-extrabold">+R$ 0,45</span>
+              <span className="text-sm text-yellow-500 font-extrabold">Por receita</span>
             </div>
           </div>
         </div>
@@ -137,8 +183,12 @@ export default function ReceitasPage() {
             <h3 className="text-sm font-normal text-neutral-400 tracking-wider">Receitas Ativas</h3>
           </div>
           <div>
-            <div className="text-2xl font-extrabold text-black tracking-wider">98</div>
-            <div className="text-sm text-neutral-500 font-extrabold mt-2">29 inativas</div>
+            <div className="text-2xl font-extrabold text-black tracking-wider">
+              {recipes.filter((r) => r.isActive).length}
+            </div>
+            <div className="text-sm text-neutral-500 font-extrabold mt-2">
+              {recipes.filter((r) => !r.isActive).length} inativas
+            </div>
           </div>
         </div>
       </div>
@@ -167,7 +217,7 @@ export default function ReceitasPage() {
         </div>
       </div>
 
-      {/* Recipes Table */}
+      {/* Recipes Table com dados reais */}
       <div className="bg-white rounded-lg border-0 shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -175,7 +225,7 @@ export default function ReceitasPage() {
               <tr className="border-b border-neutral-200">
                 <th className="text-left p-4 font-extrabold text-black tracking-wider">Receita</th>
                 <th className="text-left p-4 font-extrabold text-black tracking-wider">Categoria</th>
-                <th className="text-left p-4 font-extrabold text-black tracking-wider">Custo Produção</th>
+                <th className="text-left p-4 font-extrabold text-black tracking-wider">Custo Final</th>
                 <th className="text-left p-4 font-extrabold text-black tracking-wider">Preço Venda</th>
                 <th className="text-left p-4 font-extrabold text-black tracking-wider">Margem</th>
                 <th className="text-left p-4 font-extrabold text-black tracking-wider">Lucro Líquido</th>
@@ -189,43 +239,54 @@ export default function ReceitasPage() {
                   <td className="p-4">
                     <div>
                       <div className="font-normal tracking-wider">{recipe.name}</div>
-                      <div className="text-sm text-neutral-500">{recipe.rendimento}</div>
+                      <div className="text-sm text-neutral-500">
+                        {recipe.servings} porções • {getDifficultyText(recipe.difficulty || "")}
+                      </div>
                     </div>
                   </td>
-                  <td className="p-4 text-neutral-600 tracking-wider">{recipe.category}</td>
-                  <td className="p-4 font-extrabold tracking-wider text-red-600">
-                    R$ {recipe.costoProdução.toFixed(2)}
-                  </td>
+                  <td className="p-4 text-neutral-600 tracking-wider">{recipe.category?.name || "Sem categoria"}</td>
+                  <td className="p-4 font-extrabold tracking-wider text-red-600">{formatCurrency(recipe.finalCost)}</td>
                   <td className="p-4 font-extrabold tracking-wider text-green-600">
-                    R$ {recipe.precoVenda.toFixed(2)}
+                    {formatCurrency(recipe.sellingPrice)}
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold tracking-wider">{recipe.margemLucro.toFixed(1)}%</span>
+                      <span className="font-extrabold tracking-wider">{recipe.profitMargin.toFixed(1)}%</span>
                       <div className="w-16 h-2 bg-neutral-200 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-indigo-500 rounded-full"
-                          style={{ width: `${Math.min(recipe.margemLucro, 100)}%` }}
+                          style={{ width: `${Math.min(Math.max(recipe.profitMargin, 0), 100)}%` }}
                         ></div>
                       </div>
                     </div>
                   </td>
                   <td className="p-4 font-extrabold tracking-wider text-indigo-600">
-                    R$ {recipe.lucroLiquido.toFixed(2)}
+                    {formatCurrency(recipe.netProfit)}
                   </td>
                   <td className="p-4">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-medium rounded-full tracking-wider ${
-                        recipe.status === "Ativa" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        recipe.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {recipe.status}
+                      {recipe.isActive ? "Ativa" : "Inativa"}
                     </span>
                   </td>
                   <td className="p-4">
-                    <div className="relative">
-                      <button className="p-1 hover:bg-neutral-100 rounded">
-                        <MoreHorizontal className="w-4 h-4" />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setEditingRecipe(recipe.id)}
+                        className="p-1 hover:bg-neutral-100 rounded text-blue-600"
+                        title="Editar"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRecipe(recipe.id)}
+                        className="p-1 hover:bg-neutral-100 rounded text-red-600"
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -235,6 +296,27 @@ export default function ReceitasPage() {
           </table>
         </div>
       </div>
+
+      {filteredRecipes.length === 0 && (
+        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+          <div className="text-neutral-400 mb-4">
+            <Calculator className="w-16 h-16 mx-auto" />
+          </div>
+          <h3 className="text-lg font-extrabold text-neutral-600 mb-2">Nenhuma receita encontrada</h3>
+          <p className="text-neutral-500 mb-6">
+            {searchTerm ? "Tente ajustar os termos de busca." : "Comece criando sua primeira receita."}
+          </p>
+          {!searchTerm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold tracking-wider px-6 py-3 rounded-lg"
+            >
+              <Plus className="w-4 h-4 mr-2 inline" />
+              Criar Primeira Receita
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

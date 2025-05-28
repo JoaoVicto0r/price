@@ -10,11 +10,14 @@ export default function register() {
 
   async function handleSubmit(e: { preventDefault: () => void; }) {
     e.preventDefault();
-    const res = await fetch('http://localhost:3001/auth/register', {
+    const res = await fetch('http://localhost:3333/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: "include",
       body: JSON.stringify(form),
     });
+
+
 
      if (res.ok) {
       setMessage('Usuário registrado com sucesso!');

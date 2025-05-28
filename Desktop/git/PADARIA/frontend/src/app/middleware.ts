@@ -1,21 +1,39 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-    const currentUser = request.cookies.get('CurrentUser')?.value
-    
-    if (currentUser && request.nextUrl.pathname === '/') {
-        return NextResponse.redirect(new URL('/Dashboard', request.url))
-    }
+  const token =
+    request.cookies.get("auth_token")?.value ||
+    request.headers.get("authorization")?.replace("Bearer ", "") ||
+    null // não dá pra acessar localStorage aqui
 
-    if (!currentUser && request.nextUrl.pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/', request.url))
-    }
+  const isAuthPage = ["/", "/login"].includes(request.nextUrl.pathname)
+  const isProtectedPage = ["/receitas", "/insumos", "/financeiro", "/suporte"].some(path =>
+    request.nextUrl.pathname.startsWith(path),
+  )
+  const isRootPage = request.nextUrl.pathname === "/"
 
+  // Se está na raiz (login)
+  if (isRootPage) {
+    if (token) {
+      return NextResponse.redirect(new URL("/receitas", request.url))
+    }
     return NextResponse.next()
+  }
+
+  // Se está tentando acessar página protegida sem token
+  if (isProtectedPage && !token) {
+    return NextResponse.redirect(new URL("/", request.url))
+  }
+
+  // Se está logado e tentando acessar login, redireciona para receitas
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL("/receitas", request.url))
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
-
-    matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+  matcher: ["/", "/login", "/receitas/:path*", "/insumos/:path*", "/financeiro/:path*", "/suporte/:path*"],
 }
