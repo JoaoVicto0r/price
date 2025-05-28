@@ -19,7 +19,6 @@ export default function Page({  }) {
 
     if (res.ok) {
       const data = await res.json();
-      localStorage.setItem("token", data.token);
       router.push("/dashboard");
     } else {
       alert("Credenciais inválidas");
