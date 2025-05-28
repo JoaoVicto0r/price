@@ -23,7 +23,7 @@ class ApiClient {
   async logout() {
     this.removeToken()
     try {
-      await this.request<{ message: string }>("/auth/logout", { method: "POST" })
+      await this.request<{ message: string }>("api/auth/logout", { method: "POST" })
     } catch {
       // Ignora erros no logout para não quebrar fluxo
     }
@@ -125,7 +125,7 @@ class ApiClient {
       email: string
       name: string
       role: string
-    }>("users/profile")
+    }>("api/users/profile")
   }
 
   async getUserStats() {
@@ -133,7 +133,7 @@ class ApiClient {
       recipesCount: number
       ingredientsCount: number
       suppliersCount: number
-    }>("users/stats")
+    }>("api/users/stats")
   }
 
   // === Recipes methods ===
