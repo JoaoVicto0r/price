@@ -125,7 +125,7 @@ class ApiClient {
       email: string
       name: string
       role: string
-    }>("/users/profile")
+    }>("users/profile")
   }
 
   async getUserStats() {
@@ -133,7 +133,7 @@ class ApiClient {
       recipesCount: number
       ingredientsCount: number
       suppliersCount: number
-    }>("/users/stats")
+    }>("users/stats")
   }
 
   // === Recipes methods ===
@@ -227,7 +227,7 @@ class ApiClient {
       lowStockCount: number
       totalStockValue: number
       categoriesCount: number
-    }>("/ingredients/stats")
+    }>("ingredients/stats")
   }
 
   async getStockAlerts() {
@@ -238,7 +238,7 @@ class ApiClient {
         lowStockCount: number
         expiringSoonCount: number
       }
-    }>("/ingredients/alerts")
+    }>("ingredients/alerts")
   }
 
   // === Categories methods ===
