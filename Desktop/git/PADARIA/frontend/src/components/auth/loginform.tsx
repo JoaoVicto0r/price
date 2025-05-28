@@ -17,7 +17,7 @@ export default function Page() {
   setError("");
 
   try {
-    const res = await fetch("http://localhost:3333/api/auth/login", {
+    const res = await fetch("hhttps://price-d26o.onrender.com/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include", // importante para cookie
