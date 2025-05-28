@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use(cookieParser());
-  console.log('✅ cookie-parser ativado');
+ 
 
   // Configurar CORS
   app.enableCors({
@@ -19,7 +19,7 @@ async function bootstrap() {
     ],
     credentials: true,
   });
-  console.log('✅ CORS configurado com credentials: true');
+  
 
   // Configurar validação global
   app.useGlobalPipes(
@@ -36,7 +36,7 @@ async function bootstrap() {
   const port = configService.get('PORT') || 3333;
 
   const jwtSecret = configService.get<string>('JWT_SECRET');
-  console.log('🔐 JWT_SECRET carregado no main.ts:', jwtSecret);
+  
 
   await app.listen(port);
   console.log(`🚀 API rodando na porta ${port}`);
