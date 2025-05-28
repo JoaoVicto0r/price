@@ -15,7 +15,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      'http://192.168.56.1:3000', 
+      'http://192.168.56.1:3000',
+      'https://price-lyart-kappa.vercel.app'
     ],
     credentials: true,
   });

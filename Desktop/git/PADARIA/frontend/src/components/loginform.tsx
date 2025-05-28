@@ -10,7 +10,7 @@ export default function Page({  }) {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch("http://localhost:3001/auth/login", {
+    const res = await fetch("https://price-d26o.onrender.com/auth/login", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       credentials: "include",
