@@ -1,338 +1,337 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api"
 
 class ApiClient {
-  private baseURL: string;
-  private token: string | null = null;
-  private timeoutMs = 10000;
+  private baseURL: string
+  private token: string | null = null
+  private timeoutMs = 10000 // 10 segundos timeout padrão
 
   constructor(baseURL: string, token?: string | null) {
-    this.baseURL = baseURL;
-    this.token = token || null;
+    this.baseURL = baseURL
+    this.token = token || null
   }
 
   setToken(token: string) {
-     console.log("Salvando token:", token);
-    this.token = token;
+     console.log("Token setado:", token)
+    this.token = token
   }
 
   removeToken() {
-    this.token = null;
+    this.token = null
   }
 
+  // Implementação logout: remove token local e avisa backend
   async logout() {
-    this.removeToken();
+    this.removeToken()
     try {
-      await this.request<{ message: string }>("/auth/logout", { method: "POST" });
+      await this.request<{ message: string }>("/auth/logout", { method: "POST" })
     } catch {
-      // Ignora erros de logout
+      // Ignora erros no logout para não quebrar fluxo
     }
   }
 
+  // Health check simples
   async healthCheck() {
-    return this.request<{ status: string }>("/health");
+    return this.request<{ status: string }>("/health")
   }
 
+  // Método principal para fazer as requisições
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const url = `${this.baseURL}${endpoint}`
 
-    const defaultHeaders: Record<string, string> = {};
+    // Controla timeout via AbortController
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs)
 
-    if (this.token) {
-      defaultHeaders["Authorization"] = `Bearer ${this.token}`;
+    // Configura headers, incluindo Authorization se token existir
+    const headers: Record<string, string> = {
+      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      ...((options.method && ["POST", "PUT", "PATCH"].includes(options.method.toUpperCase()))
+        ? { "Content-Type": "application/json" }
+        : {}),
+      ...(options.headers as Record<string, string>),
     }
-
-    const hasBody = ["POST", "PUT", "PATCH"].includes((options.method || "GET").toUpperCase());
-    if (hasBody && !defaultHeaders["Content-Type"]) {
-      defaultHeaders["Content-Type"] = "application/json";
-    }
-
-    const headers = {
-      ...defaultHeaders,
-      ...(options.headers || {}),
-    };
 
     try {
       const response = await fetch(url, {
         ...options,
         headers,
-        credentials: "include",
+        credentials: "include", // mantém cookies se for o caso
         signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
+      })
+      clearTimeout(timeout)
 
       if (!response.ok) {
-        let message = `HTTP error! status: ${response.status}`;
+        // Tenta pegar o JSON com erro, se falhar usa mensagem padrão
+        let errorMessage = `HTTP error! status: ${response.status}`
         try {
-          const errorData = await response.json();
-          if (errorData?.message) message = errorData.message;
+          const errorData = await response.json()
+          if (errorData?.message) errorMessage = errorData.message
         } catch {}
-        throw new Error(message);
+        throw new Error(errorMessage)
       }
 
+      // Se resposta for vazia (204 No Content), retorna vazio
       if (response.status === 204) {
-        return {} as T;
+        return {} as T
       }
 
-      return await response.json();
+      return await response.json()
     } catch (error: any) {
-      clearTimeout(timeout);
+      clearTimeout(timeout)
       if (error.name === "AbortError") {
-        throw new Error("Request timeout");
+        throw new Error("Request timeout")
       }
-      throw error;
+      // Repassa outros erros
+      throw error
     }
   }
 
-  // === Auth ===
+  // === Auth methods ===
 
   async login(email: string, password: string) {
     const data = await this.request<{
-      access_token: string;
-      user: { id: string; email: string; name: string; role: string };
+      access_token: string
+      user: { id: string; email: string; name: string; role: string }
     }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
-    });
-
-    this.setToken(data.access_token);
-    return data;
+    })
+    this.setToken(data.access_token)
+    return data
   }
 
   async register(userData: {
-    name: string;
-    email: string;
-    password: string;
-    role?: string;
+    name: string
+    email: string
+    password: string
+    role?: string
   }) {
     const data = await this.request<{
-      access_token: string;
-      user: { id: string; email: string; name: string; role: string };
+      access_token: string
+      user: { id: string; email: string; name: string; role: string }
     }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
-    });
-
-    this.setToken(data.access_token);
-    return data;
+    })
+    this.setToken(data.access_token)
+    return data
   }
 
-  // === Users ===
+  // === User methods ===
 
   async getProfile() {
     return this.request<{
-      id: string;
-      email: string;
-      name: string;
-      role: string;
-    }>("/users/profile");
+      id: string
+      email: string
+      name: string
+      role: string
+    }>("/users/profile")
   }
 
   async getUserStats() {
     return this.request<{
-      recipesCount: number;
-      ingredientsCount: number;
-      suppliersCount: number;
-    }>("/users/stats");
+      recipesCount: number
+      ingredientsCount: number
+      suppliersCount: number
+    }>("/users/stats")
   }
 
-  // === Recipes ===
+  // === Recipes methods ===
 
   async getRecipes(categoryId?: string) {
-    const params = new URLSearchParams();
-    if (categoryId) params.append("categoryId", categoryId);
-    const query = params.toString();
-    return this.request<Recipe[]>(`/recipes${query ? `?${query}` : ""}`);
+    const params = new URLSearchParams()
+    if (categoryId) params.append("categoryId", categoryId)
+    const queryString = params.toString()
+    return this.request<Recipe[]>(`/recipes${queryString ? `?${queryString}` : ""}`)
   }
 
   async getRecipe(id: string) {
-    return this.request<Recipe>(`/recipes/${id}`);
+    return this.request<Recipe>(`/recipes/${id}`)
   }
 
   async createRecipe(data: CreateRecipeData) {
     return this.request<Recipe>("/recipes", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    })
   }
 
   async updateRecipe(id: string, data: Partial<CreateRecipeData>) {
     return this.request<Recipe>(`/recipes/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
-    });
+    })
   }
 
   async deleteRecipe(id: string) {
     return this.request<{ message: string }>(`/recipes/${id}`, {
       method: "DELETE",
-    });
+    })
   }
 
   async getRecipeStats() {
     return this.request<{
-      totalRecipes: number;
-      activeRecipes: number;
-      inactiveRecipes: number;
-      averageMargin: number;
-      totalValue: number;
-    }>("/recipes/stats");
+      totalRecipes: number
+      activeRecipes: number
+      inactiveRecipes: number
+      averageMargin: number
+      totalValue: number
+    }>("/recipes/stats")
   }
 
-  // === Ingredients ===
+  // === Ingredients methods ===
 
   async getIngredients(categoryId?: string, lowStock?: boolean) {
-    const params = new URLSearchParams();
-    if (categoryId) params.append("categoryId", categoryId);
-    if (lowStock) params.append("lowStock", "true");
-    const query = params.toString();
-    return this.request<Ingredient[]>(`/ingredients${query ? `?${query}` : ""}`);
+    const params = new URLSearchParams()
+    if (categoryId) params.append("categoryId", categoryId)
+    if (lowStock) params.append("lowStock", "true")
+    const queryString = params.toString()
+
+    return this.request<Ingredient[]>(`/ingredients${queryString ? `?${queryString}` : ""}`)
   }
 
   async getIngredient(id: string) {
-    return this.request<Ingredient>(`/ingredients/${id}`);
+    return this.request<Ingredient>(`/ingredients/${id}`)
   }
 
   async createIngredient(data: CreateIngredientData) {
     return this.request<Ingredient>("/ingredients", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    })
   }
 
   async updateIngredient(id: string, data: Partial<CreateIngredientData>) {
     return this.request<Ingredient>(`/ingredients/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
-    });
+    })
   }
 
   async deleteIngredient(id: string) {
     return this.request<{ message: string }>(`/ingredients/${id}`, {
       method: "DELETE",
-    });
+    })
   }
 
   async updateStock(id: string, quantity: number, operation: "add" | "subtract") {
     return this.request<Ingredient>(`/ingredients/${id}/stock`, {
       method: "PATCH",
       body: JSON.stringify({ quantity, operation }),
-    });
+    })
   }
 
   async getIngredientStats() {
     return this.request<{
-      totalIngredients: number;
-      lowStockCount: number;
-      totalStockValue: number;
-      categoriesCount: number;
-    }>("/ingredients/stats");
+      totalIngredients: number
+      lowStockCount: number
+      totalStockValue: number
+      categoriesCount: number
+    }>("/ingredients/stats")
   }
 
   async getStockAlerts() {
     return this.request<{
-      lowStock: Ingredient[];
-      expiringSoon: Ingredient[];
+      lowStock: Ingredient[]
+      expiringSoon: Ingredient[]
       alerts: {
-        lowStockCount: number;
-        expiringSoonCount: number;
-      };
-    }>("/ingredients/alerts");
+        lowStockCount: number
+        expiringSoonCount: number
+      }
+    }>("/ingredients/alerts")
   }
 
-  // === Categories ===
+  // === Categories methods ===
 
   async getCategories() {
-    return this.request<Category[]>("/categories");
+    return this.request<Category[]>("/categories")
   }
 
   async createCategory(data: { name: string; description?: string }) {
     return this.request<Category>("/categories", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    })
   }
 
-  // === Suppliers ===
+  // === Suppliers methods ===
 
   async getSuppliers() {
-    return this.request<Supplier[]>("/suppliers");
+    return this.request<Supplier[]>("/suppliers")
   }
 
   async createSupplier(data: CreateSupplierData) {
     return this.request<Supplier>("/suppliers", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    })
   }
 
-  // === Calculator ===
+  // === Calculator methods ===
 
   async calculateRecipeCosts(recipeId: string) {
     return this.request<{
-      totalCost: number;
-      operationalCost: number;
-      finalCost: number;
-      sellingPrice: number;
-      profitMargin: number;
-      netProfit: number;
-      costPerServing: number;
-      pricePerServing: number;
+      totalCost: number
+      operationalCost: number
+      finalCost: number
+      sellingPrice: number
+      profitMargin: number
+      netProfit: number
+      costPerServing: number
+      pricePerServing: number
     }>(`/calculator/recipe/${recipeId}/calculate`, {
       method: "POST",
-    });
+    })
   }
 
   async simulateRecipeCost(data: {
-    ingredients: { ingredientId: string; quantity: number }[];
-    operationalCost?: number;
-    servings?: number;
+    ingredients: { ingredientId: string; quantity: number }[]
+    operationalCost?: number
+    servings?: number
   }) {
     return this.request<{
       ingredients: Array<{
-        ingredientId: string;
-        name: string;
-        quantity: number;
-        unitCost: number;
-        totalCost: number;
-      }>;
-      totalIngredientsCost: number;
-      operationalCost: number;
-      finalCost: number;
-      costPerServing: number;
+        ingredientId: string
+        name: string
+        quantity: number
+        unitCost: number
+        totalCost: number
+      }>
+      totalIngredientsCost: number
+      operationalCost: number
+      finalCost: number
+      costPerServing: number
     }>("/calculator/simulate", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    })
   }
 
   async getMarginAnalysis() {
     return this.request<{
       analysis: {
-        totalRecipes: number;
-        averageMargin: number;
-        totalRevenue: number;
-        totalCost: number;
-        totalProfit: number;
-        bestMargin: number;
-        worstMargin: number;
-        profitableRecipes: number;
-      };
+        totalRecipes: number
+        averageMargin: number
+        totalRevenue: number
+        totalCost: number
+        totalProfit: number
+        bestMargin: number
+        worstMargin: number
+        profitableRecipes: number
+      }
       recipes: Array<{
-        id: string;
-        name: string;
-        finalCost: number;
-        sellingPrice: number;
-        profitMargin: number;
-        netProfit: number;
-      }>;
-    }>("/calculator/margin-analysis");
+        id: string
+        name: string
+        finalCost: number
+        sellingPrice: number
+        profitMargin: number
+        netProfit: number
+      }>
+    }>("/calculator/margin-analysis")
   }
 }
 
-export const api = new ApiClient(API_BASE_URL);
+export const api = new ApiClient(API_BASE_URL)
 
 // -- Os tipos podem continuar iguais --
 
