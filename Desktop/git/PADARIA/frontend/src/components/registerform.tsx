@@ -13,8 +13,11 @@ export default function register() {
     const res = await fetch('https://price-d26o.onrender.com/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: "include",
       body: JSON.stringify(form),
     });
+
+
 
      if (res.ok) {
       setMessage('Usuário registrado com sucesso!');
