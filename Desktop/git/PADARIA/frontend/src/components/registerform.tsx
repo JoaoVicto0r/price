@@ -10,7 +10,7 @@ export default function register() {
 
   async function handleSubmit(e: { preventDefault: () => void; }) {
     e.preventDefault();
-    const res = await fetch('https://price-d26o.onrender.com/auth/register', {
+    const res = await fetch('https://price-d26o.onrender.com/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: "include",
