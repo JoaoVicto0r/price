@@ -92,7 +92,7 @@ class ApiClient {
     const data = await this.request<{
       access_token: string
       user: { id: string; email: string; name: string; role: string }
-    }>("/auth/login", {
+    }>("api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     })
