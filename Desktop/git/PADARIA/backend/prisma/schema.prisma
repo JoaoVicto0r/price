@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+   //output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @default(autoincrement()) @id
+  email String  @unique
+  name  String?
+  password String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipes Recipe[]
+  ingredients Ingredient[]
+  suppliers   Supplier[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int   @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  recipes     Recipe[]
+  ingredients Ingredient[]
+
+  @@map("categories")
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  cnpj        String?  @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  userId      Int
+  user        User         @relation(fields: [userId], references: [id])
+  ingredients Ingredient[]
+
+  @@map("suppliers")
+}
+
+model Ingredient {
+  id             Int   @id @default(autoincrement())
+  name           String
+  description    String?
+  unit           String   // kg, g, l, ml, unidade, etc.
+  unitCost       Float    // custo por unidade
+  stock          Float    @default(0)
+  minStock       Float    @default(0)
+  expirationDate DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relacionamentos
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
+  // Ingredientes usados em receitas
+  recipeIngredients RecipeIngredient[]
+
+  @@map("ingredients")
+}
+
+model Recipe {
+  id                Int   @id @default(autoincrement())
+  name              String
+  description       String?
+  servings          Int      // rendimento (quantas porções)
+  preparationTime   Int?     // tempo em minutos
+  difficulty        String?  // fácil, médio, difícil
+  instructions      String?  // modo de preparo
+  
+  // Custos calculados
+  totalCost         Float    @default(0) // custo total dos ingredientes
+  operationalCost   Float    @default(0) // custos operacionais (energia, mão de obra, etc.)
+  finalCost         Float    @default(0) // custo final (total + operacional)
+  
+  // Preços e margens
+  sellingPrice      Float    @default(0) // preço de venda
+  profitMargin      Float    @default(0) // margem de lucro em %
+  netProfit         Float    @default(0) // lucro líquido
+  
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relacionamentos
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  // Ingredientes da receita
+  ingredients RecipeIngredient[]
+
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id       Int @id @default(autoincrement())
+  quantity Float  // quantidade do ingrediente na receita
+  cost     Float  @default(0) // custo calculado (quantity * unitCost)
+
+  // Relacionamentos
+  recipeId     Int
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredientId Int
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+
+
