@@ -17,8 +17,7 @@ export default function Page() {
   setLoading(true);
   
   try {
-    // Corrigindo a URL removendo a barra extra
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`.replace(/\/+/g, '/'), {
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -27,13 +26,12 @@ export default function Page() {
 
     if (!res.ok) {
       const errorData = await res.json();
-      throw new Error(errorData.message || "Login falhou");
+      throw new Error(errorData.message || "Falha no login");
     }
 
-    const data = await res.json();
     router.push("/dashboard");
-  } catch (err: any) {
-    setError(err.message || "Erro ao conectar com o servidor");
+  } catch (err) {
+    setError(err.message || "Erro ao conectar ao servidor");
   } finally {
     setLoading(false);
   }
