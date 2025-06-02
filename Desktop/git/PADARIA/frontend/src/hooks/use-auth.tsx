@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
@@ -13,11 +14,12 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: { name: string; email: string; password: string }) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (userData: { name: string; email: string; password: string }) => Promise<boolean>;
+  logout: () => Promise<void>;
   loading: boolean;
   isAuthenticated: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,58 +27,69 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadUser() {
+    const loadUser = async () => {
       try {
-        // Aqui não busca token no localStorage
-        // Presume que backend vai autenticar via cookie HttpOnly
         const userProfile = await api.getProfile();
-        if (isMounted) setUser(userProfile);
-      } catch {
-        if (isMounted) {
-          setUser(null);
-        }
+        setUser(userProfile);
+      } catch (err) {
+        setUser(null);
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
-    }
+    };
 
     loadUser();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
+    setError(null);
     try {
-      // api.login faz fetch com credentials: 'include', backend seta cookie HttpOnly
       const response = await api.login(email, password);
-      // não precisa guardar token no localStorage nem setar no api
       setUser(response.user);
+      return true;
+    } catch (err: any) {
+      setError(err.message || "Falha no login");
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (userData: { name: string; email: string; password: string }) => {
+  const register = async (userData: { 
+    name: string; 
+    email: string; 
+    password: string 
+  }): Promise<boolean> => {
     setLoading(true);
+    setError(null);
     try {
       const response = await api.register(userData);
       setUser(response.user);
+      return true;
+    } catch (err: any) {
+      setError(err.message || "Falha no registro");
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    api.logout(); // ideal que o backend limpe o cookie da sessão
-    setUser(null);
-    setLoading(false);
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await api.logout();
+      setUser(null);
+      router.push("/login");
+    } catch (err: any) {
+      setError(err.message || "Falha ao sair");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -88,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         loading,
         isAuthenticated: Boolean(user),
+        error,
       }}
     >
       {children}
@@ -98,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be usado dentro de um AuthProvider");
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
   }
   return context;
 }
