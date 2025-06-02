@@ -5,18 +5,25 @@ import { Plus, Search, Filter, Calculator, TrendingUp, AlertTriangle, Edit, Tras
 import { useRecipes } from "@/hooks/use-recipes"
 import { useAuth } from "@/hooks/use-auth"
 import { RecipeForm } from "@/components/recipes/recipe-form"
-import type { CreateRecipeData } from "@/lib/api"
+import type { CreateRecipeData, Recipe } from "@/lib/api" // Importe o tipo Recipe
 
 export default function ReceitasPage() {
+  // Estados do componente
   const [searchTerm, setSearchTerm] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [editingRecipe, setEditingRecipe] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Hooks customizados
   const { user, isAuthenticated } = useAuth()
-  const { recipes, loading, createRecipe, updateRecipe, deleteRecipe } = useRecipes()
+  const { 
+    recipes, 
+    loading, 
+    createRecipe, 
+    updateRecipe, 
+    deleteRecipe  } = useRecipes()
 
-  // Se não estiver autenticado, redirecionar para login
+  // Se não estiver autenticado, mostrar mensagem
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
@@ -25,12 +32,13 @@ export default function ReceitasPage() {
     )
   }
 
-  const filteredRecipes = recipes.filter(
-    (recipe) =>
-      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (recipe.category?.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
+  // Filtrar receitas baseado no termo de busca
+  const filteredRecipes = recipes.filter((recipe: Recipe) =>
+    recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (recipe.category?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // Handler para criar receita
   const handleCreateRecipe = async (data: CreateRecipeData) => {
     setIsSubmitting(true)
     try {
@@ -41,6 +49,7 @@ export default function ReceitasPage() {
     }
   }
 
+  // Handler para atualizar receita
   const handleUpdateRecipe = async (data: CreateRecipeData) => {
     if (!editingRecipe) return
 
@@ -53,6 +62,7 @@ export default function ReceitasPage() {
     }
   }
 
+  // Handler para deletar receita
   const handleDeleteRecipe = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir esta receita?")) {
       try {
@@ -63,6 +73,7 @@ export default function ReceitasPage() {
     }
   }
 
+  // Formatar moeda
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -70,19 +81,17 @@ export default function ReceitasPage() {
     }).format(value)
   }
 
+  // Traduzir dificuldade
   const getDifficultyText = (difficulty: string) => {
     switch (difficulty) {
-      case "EASY":
-        return "Fácil"
-      case "MEDIUM":
-        return "Médio"
-      case "HARD":
-        return "Difícil"
-      default:
-        return difficulty
+      case "EASY": return "Fácil"
+      case "MEDIUM": return "Médio"
+      case "HARD": return "Difícil"
+      default: return difficulty
     }
   }
 
+  // Mostrar loading enquanto carrega
   if (loading) {
     return (
       <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
@@ -91,8 +100,9 @@ export default function ReceitasPage() {
     )
   }
 
+  // Mostrar formulário se necessário
   if (showForm || editingRecipe) {
-    const recipeToEdit = editingRecipe ? recipes.find((r) => r.id === editingRecipe) : undefined
+    const recipeToEdit = editingRecipe ? recipes.find((r: Recipe) => r.id === editingRecipe) : undefined
     return (
       <div className="space-y-8">
         <RecipeForm
