@@ -15,22 +15,25 @@ export default function Page() {
   const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
+  setError("");
+
   try {
-    const res = await fetch(`${API_BASE_URL}api/auth/login`, {
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, { // Adicionei a barra
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json(); // Sempre leia o JSON
 
-    if (res.ok) {
-      router.push("/dashboard");
-    } else {
-      alert(data.message || "Credenciais inválidas"); // Mostra erro do backend
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Login falhou");
     }
-  } catch (err) {
-    alert("Erro de conexão");
+
+    const data = await res.json();
+    router.push("/dashboard");
+  } catch (err: any) {
+    setError(err.message || "Erro ao conectar com o servidor");
   } finally {
     setLoading(false);
   }
