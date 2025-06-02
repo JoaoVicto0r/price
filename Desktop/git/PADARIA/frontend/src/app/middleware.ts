@@ -1,39 +1,81 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-export function middleware(request: NextRequest) {
-  const token =
-    request.cookies.get("auth_token")?.value ||
-    request.headers.get("authorization")?.replace("Bearer ", "") ||
-    null // não dá pra acessar localStorage aqui
+// Adicione esta função de verificação
+async function verifyToken(token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${process.env.API_BASE_URL}/api/auth/verify`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      credentials: "include"
+    })
+    return response.ok
+  } catch (error) {
+    console.error("Token verification failed:", error)
+    return false
+  }
+}
 
-  const isAuthPage = ["/", "/login"].includes(request.nextUrl.pathname)
-  const isProtectedPage = ["/receitas", "/insumos", "/financeiro", "/suporte"].some(path =>
-    request.nextUrl.pathname.startsWith(path),
+export async function middleware(request: NextRequest) {
+  const token = request.cookies.get("token")?.value || null
+
+  const authRoutes = ["/", "/login"]
+  const protectedRoutes = [
+    "/dashboard",
+    "/receitas",
+    "/insumos",
+    "/financeiro",
+    "/suporte"
+  ]
+
+  const isAuthRoute = authRoutes.includes(request.nextUrl.pathname)
+  const isProtectedRoute = protectedRoutes.some(path =>
+    request.nextUrl.pathname.startsWith(path)
   )
-  const isRootPage = request.nextUrl.pathname === "/"
 
-  // Se está na raiz (login)
-  if (isRootPage) {
+  if (isAuthRoute) {
     if (token) {
-      return NextResponse.redirect(new URL("/receitas", request.url))
+      // Verifique se o token é válido antes de redirecionar
+      const isValid = await verifyToken(token)
+      if (isValid) {
+        return NextResponse.redirect(new URL("/dashboard", request.url))
+      }
+      // Se inválido, limpe o cookie
+      const response = NextResponse.next()
+      response.cookies.delete("token")
+      return response
     }
     return NextResponse.next()
   }
 
-  // Se está tentando acessar página protegida sem token
-  if (isProtectedPage && !token) {
-    return NextResponse.redirect(new URL("/", request.url))
-  }
+  if (isProtectedRoute) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
 
-  // Se está logado e tentando acessar login, redireciona para receitas
-  if (isAuthPage && token) {
-    return NextResponse.redirect(new URL("/receitas", request.url))
+    // Verifique a validade do token
+    const isValid = await verifyToken(token)
+    if (!isValid) {
+      const response = NextResponse.redirect(new URL("/login", request.url))
+      response.cookies.delete("token")
+      return response
+    }
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/", "/login", "/receitas/:path*", "/insumos/:path*", "/financeiro/:path*", "/suporte/:path*"],
+  matcher: [
+    "/",
+    "/login",
+    "/dashboard/:path*",
+    "/receitas/:path*",
+    "/insumos/:path*",
+    "/financeiro/:path*",
+    "/suporte/:path*"
+  ]
 }
