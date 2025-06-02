@@ -1,0 +1,20 @@
+# Ignora dependências
+frontend/node_modules/
+backend/node_modules/
+
+# Ignora envs
+*.env
+
+# Ignora arquivos temporários
+*.log
+.DS_Store
+*.swp
+*.tmp
+
+# Ignora IDEs
+.vscode/
+.idea/
+
+# Ignora SO Windows
+Thumbs.db
+desktop.ini
