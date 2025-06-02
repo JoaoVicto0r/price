@@ -41,7 +41,7 @@ class ApiClient {
 
   // Health check simples
   async healthCheck() {
-    return this.request<{ status: string }>("/health")
+    return this.request<{ status: string }>("api/health")
   }
 
   // Método principal para fazer as requisições

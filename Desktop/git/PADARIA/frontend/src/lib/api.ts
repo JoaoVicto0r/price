@@ -148,29 +148,29 @@ class ApiClient {
     const params = new URLSearchParams()
     if (categoryId) params.append("categoryId", categoryId)
     const queryString = params.toString()
-    return this.request<Recipe[]>(`/recipes${queryString ? `?${queryString}` : ""}`)
+    return this.request<Recipe[]>(`api/recipes${queryString ? `?${queryString}` : ""}`)
   }
 
   async getRecipe(id: string) {
-    return this.request<Recipe>(`/recipes/${id}`)
+    return this.request<Recipe>(`api/recipes/${id}`)
   }
 
   async createRecipe(data: CreateRecipeData) {
-    return this.request<Recipe>("/recipes", {
+    return this.request<Recipe>("api/recipes", {
       method: "POST",
       body: JSON.stringify(data),
     })
   }
 
   async updateRecipe(id: string, data: Partial<CreateRecipeData>) {
-    return this.request<Recipe>(`/recipes/${id}`, {
+    return this.request<Recipe>(`api/recipes/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     })
   }
 
   async deleteRecipe(id: string) {
-    return this.request<{ message: string }>(`/recipes/${id}`, {
+    return this.request<{ message: string }>(`api/recipes/${id}`, {
       method: "DELETE",
     })
   }
@@ -182,7 +182,7 @@ class ApiClient {
       inactiveRecipes: number
       averageMargin: number
       totalValue: number
-    }>("/recipes/stats")
+    }>("api/recipes/stats")
   }
 
   // === Ingredients methods ===
@@ -193,35 +193,35 @@ class ApiClient {
     if (lowStock) params.append("lowStock", "true")
     const queryString = params.toString()
 
-    return this.request<Ingredient[]>(`/ingredients${queryString ? `?${queryString}` : ""}`)
+    return this.request<Ingredient[]>(`api/ingredients${queryString ? `?${queryString}` : ""}`)
   }
 
   async getIngredient(id: string) {
-    return this.request<Ingredient>(`/ingredients/${id}`)
+    return this.request<Ingredient>(`api/ingredients/${id}`)
   }
 
   async createIngredient(data: CreateIngredientData) {
-    return this.request<Ingredient>("/ingredients", {
+    return this.request<Ingredient>("api/ingredients", {
       method: "POST",
       body: JSON.stringify(data),
     })
   }
 
   async updateIngredient(id: string, data: Partial<CreateIngredientData>) {
-    return this.request<Ingredient>(`/ingredients/${id}`, {
+    return this.request<Ingredient>(`api/ingredients/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     })
   }
 
   async deleteIngredient(id: string) {
-    return this.request<{ message: string }>(`/ingredients/${id}`, {
+    return this.request<{ message: string }>(`api/ingredients/${id}`, {
       method: "DELETE",
     })
   }
 
   async updateStock(id: string, quantity: number, operation: "add" | "subtract") {
-    return this.request<Ingredient>(`/ingredients/${id}/stock`, {
+    return this.request<Ingredient>(`api/ingredients/${id}/stock`, {
       method: "PATCH",
       body: JSON.stringify({ quantity, operation }),
     })
@@ -233,7 +233,7 @@ class ApiClient {
       lowStockCount: number
       totalStockValue: number
       categoriesCount: number
-    }>("ingredients/stats")
+    }>("api/ingredients/stats")
   }
 
   async getStockAlerts() {
@@ -244,17 +244,17 @@ class ApiClient {
         lowStockCount: number
         expiringSoonCount: number
       }
-    }>("ingredients/alerts")
+    }>("api/ingredients/alerts")
   }
 
   // === Categories methods ===
 
   async getCategories() {
-    return this.request<Category[]>("/categories")
+    return this.request<Category[]>("api/categories")
   }
 
   async createCategory(data: { name: string; description?: string }) {
-    return this.request<Category>("/categories", {
+    return this.request<Category>("api/categories", {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -263,11 +263,11 @@ class ApiClient {
   // === Suppliers methods ===
 
   async getSuppliers() {
-    return this.request<Supplier[]>("/suppliers")
+    return this.request<Supplier[]>("api/suppliers")
   }
 
   async createSupplier(data: CreateSupplierData) {
-    return this.request<Supplier>("/suppliers", {
+    return this.request<Supplier>("api/suppliers", {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -285,7 +285,7 @@ class ApiClient {
       netProfit: number
       costPerServing: number
       pricePerServing: number
-    }>(`/calculator/recipe/${recipeId}/calculate`, {
+    }>(`api/calculator/recipe/${recipeId}/calculate`, {
       method: "POST",
     })
   }
@@ -307,7 +307,7 @@ class ApiClient {
       operationalCost: number
       finalCost: number
       costPerServing: number
-    }>("/calculator/simulate", {
+    }>("api/calculator/simulate", {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -333,7 +333,7 @@ class ApiClient {
         profitMargin: number
         netProfit: number
       }>
-    }>("/calculator/margin-analysis")
+    }>("api/calculator/margin-analysis")
   }
 }
 
