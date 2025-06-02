@@ -15,10 +15,10 @@ export default function Page() {
   const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
-  setError("");
-
+  
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, { // Adicionei a barra
+    // Corrigindo a URL removendo a barra extra
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`.replace(/\/+/g, '/'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
