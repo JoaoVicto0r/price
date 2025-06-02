@@ -1,3 +1,13 @@
+export interface User {
+  id: string
+  email: string
+  name: string
+  role: string
+  createdAt?: string
+  updatedAt?: string
+  // Adicione outros campos que seu usuário possa ter
+}
+
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://price-d26o.onrender.com/api"
 
 class ApiClient {
@@ -333,6 +343,9 @@ export const api = new ApiClient(API_BASE_URL)
 
 
 // Types
+
+
+
 export interface Recipe {
   id: string
   name: string
