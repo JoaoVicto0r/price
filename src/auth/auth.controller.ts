@@ -26,33 +26,37 @@ export class AuthController {
   }
 
   @Post('login')
-  @HttpCode(HttpStatus.OK)
-  async login(
-    @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const token = await this.authService.login(loginDto);
+@HttpCode(HttpStatus.OK)
+async login(
+  @Body() loginDto: LoginDto,
+  @Res({ passthrough: true }) response: Response,
+) {
+  const token = await this.authService.login(loginDto);
 
-    response.cookie('auth_token', token.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
-      path: '/',
-    });
+  response.cookie('auth_token', token.access_token, {
+    httpOnly: true,
+    secure: true, // SEMPRE true em produção
+    sameSite: 'none', // Alterado para cross-origin
+    domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
 
-    return { message: 'Login realizado com sucesso' };
-  }
-
+  return { 
+    message: 'Login realizado com sucesso',
+    user: token.user // Retorne também os dados do usuário
+  };
+}
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return {
-      id: req.user.userId,
-      email: req.user.email,
-      role: req.user.role,
-    };
-  }
+@Get('profile')
+getProfile(@Request() req) {
+  return {
+    id: req.user.userId,
+    email: req.user.email,
+    name: req.user.name, // Adicione mais campos se necessário
+    role: req.user.role,
+  };
+}
 
   @UseGuards(JwtAuthGuard)
   @Post('refresh')
@@ -73,9 +77,12 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('auth_token', { path: '/' });
-    return { message: 'Logout realizado com sucesso' };
-  }
+@HttpCode(HttpStatus.OK)
+async logout(@Res({ passthrough: true }) response: Response) {
+  response.clearCookie('auth_token', {
+    path: '/',
+    domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined
+  });
+  return { message: 'Logout realizado com sucesso' };
+}
 }

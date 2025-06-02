@@ -19,6 +19,8 @@ async function bootstrap() {
       'https://price-lyart-kappa.vercel.app'
     ],
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type,Authorization',
   });
   
 
