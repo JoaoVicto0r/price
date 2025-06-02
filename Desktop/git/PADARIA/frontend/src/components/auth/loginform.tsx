@@ -15,7 +15,8 @@ export default function Page() {
   const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
-  
+  setError("");
+
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
@@ -26,12 +27,17 @@ export default function Page() {
 
     if (!res.ok) {
       const errorData = await res.json();
-      throw new Error(errorData.message || "Falha no login");
+      throw new Error(errorData.message || "Credenciais inválidas");
     }
 
+    const data = await res.json();
     router.push("/dashboard");
-  } catch (err) {
-    setError(err.message || "Erro ao conectar ao servidor");
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError("Erro desconhecido ao conectar com o servidor");
+    }
   } finally {
     setLoading(false);
   }
