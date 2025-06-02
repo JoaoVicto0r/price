@@ -14,25 +14,22 @@ export default function Page() {
   const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
-  setError("");
-
   try {
-    const res = await fetch("https://price-d26o.onrender.com/api/auth/login", {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", // importante para cookie
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
+    const data = await res.json(); // Sempre leia o JSON
 
     if (res.ok) {
-      // só tentamos ler json para extrair dados do usuário, token já vem no cookie
-      await res.json(); 
       router.push("/dashboard");
     } else {
-      setError("Credenciais inválidas");
+      alert(data.message || "Credenciais inválidas"); // Mostra erro do backend
     }
-  } catch {
-    setError("Erro ao conectar com o servidor");
+  } catch (err) {
+    alert("Erro de conexão");
   } finally {
     setLoading(false);
   }
