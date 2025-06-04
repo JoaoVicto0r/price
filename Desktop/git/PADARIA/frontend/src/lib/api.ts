@@ -104,7 +104,7 @@ class ApiClient {
   const response = await this.request<{ 
     access_token: string,  // Verifique se é este o nome do campo
     user: User 
-  }>("/auth/login", {
+  }>("api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
