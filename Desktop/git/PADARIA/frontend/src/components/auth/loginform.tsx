@@ -9,9 +9,19 @@ export default function LoginForm() {
   const { login, error: authError, loading } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await login(email, password); // O redirecionamento agora é tratado pelo useAuth
-  };
+  e.preventDefault()
+  
+  try {
+    const success = await login(email, password)
+    if (success) {
+      // Redirecionamento agora é tratado pelo próprio login
+      return
+    }
+  } finally {
+    // Mantém o estado limpo após tentativa
+    setPassword("")
+  }
+}
 
   return (
     <div className="w-[1920px] h-[1080px] relative bg-white outline outline-1 outline-offset-[-1px] outline-zinc-300 overflow-hidden">

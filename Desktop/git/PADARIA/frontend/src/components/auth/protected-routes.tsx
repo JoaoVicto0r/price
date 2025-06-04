@@ -1,23 +1,23 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading, error } = useAuth()
-  const router = useRouter()
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push("/")
+      // Usando window.location para garantir limpeza completa do estado
+      window.location.href = "/login"
+      return
     }
-  }, [isAuthenticated, loading, router])
+  }, [isAuthenticated, loading])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
-        <div className="text-white text-xl tracking-wider">Carregando...</div>
+        <div className="text-white text-xl tracking-wider">Verificando autenticação...</div>
       </div>
     )
   }
@@ -25,7 +25,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (error) {
     return (
       <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
-        <div className="text-white text-xl tracking-wider">{error}</div>
+        <div className="text-white text-xl tracking-wider">
+          Erro de autenticação: {error}
+        </div>
       </div>
     )
   }

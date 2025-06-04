@@ -31,29 +31,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const loadUser = async () => {
-  const token = localStorage.getItem('token');
+   const loadUser = async () => {
+  const token = localStorage.getItem('token')
   
   if (!token) {
-    setLoading(false);
-    return;
+    setLoading(false)
+    return
   }
 
   try {
-    api.setToken(token); // Configura o token no ApiClient antes da requisição
-    const userProfile = await api.getProfile();
-    setUser(userProfile);
-  } catch (err: any) {
-    // Limpa tudo se houver erro 401
-    if (err.message.includes('401')) {
-      localStorage.removeItem('token');
-      api.removeToken();
-      setUser(null);
+    api.setToken(token)
+    const userProfile = await api.getProfile()
+    setUser(userProfile)
+    
+    // Verificação adicional do token
+    if (!userProfile || !userProfile.id) {
+      throw new Error("Perfil de usuário inválido")
     }
+  } catch (err: any) {
+    console.error("Erro ao carregar usuário:", err)
+    localStorage.removeItem('token')
+    api.removeToken()
+    setUser(null)
   } finally {
-    setLoading(false);
+    setLoading(false)
   }
-};
+}
 
     loadUser();
   }, []);
