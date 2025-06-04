@@ -5,7 +5,7 @@ import { api } from "@/lib/api"
 
 export function ApiStatus() {
   const [status, setStatus] = useState<"checking" | "online" | "offline">("checking")
-
+/*
   useEffect(() => {
     const checkStatus = async () => {
       try {
@@ -23,6 +23,7 @@ export function ApiStatus() {
 
     return () => clearInterval(interval)
   }, [])
+*/
 
   const getStatusColor = () => {
     switch (status) {
