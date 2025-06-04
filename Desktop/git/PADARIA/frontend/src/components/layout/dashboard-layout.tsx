@@ -17,7 +17,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="ml-80 flex-1 p-8">
           {/* Status da API no canto superior direito */}
           <div className="fixed top-8 right-8 z-50">
-            <ApiStatus />
+            
           </div>
           {children}
         </div>
