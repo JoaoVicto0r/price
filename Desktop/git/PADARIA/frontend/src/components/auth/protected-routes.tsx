@@ -1,4 +1,3 @@
-// components/protected-route.tsx
 "use client"
 
 import { useEffect } from "react"
@@ -6,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, error } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -15,15 +14,21 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, loading, router])
 
-  if (loading || !isAuthenticated) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
-        <div className="text-white text-xl tracking-wider">
-          {loading ? "Carregando..." : "Redirecionando para login..."}
-        </div>
+        <div className="text-white text-xl tracking-wider">Carregando...</div>
       </div>
     )
   }
 
-  return <>{children}</>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
+        <div className="text-white text-xl tracking-wider">{error}</div>
+      </div>
+    )
+  }
+
+  return isAuthenticated ? <>{children}</> : null
 }

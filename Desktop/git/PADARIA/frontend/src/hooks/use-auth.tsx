@@ -58,19 +58,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
- const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
   setLoading(true);
   setError(null);
   try {
     const response = await api.login(email, password);
     
-    // Armazena em 3 lugares para consistência
+    // Armazenamento consistente do token
     localStorage.setItem('token', response.access_token);
     api.setToken(response.access_token);
     setUser(response.user);
     
-    // Redireciona aqui mesmo após login bem-sucedido
-    router.push('/receitas');
     return true;
   } catch (err: any) {
     setError(err.message || "Falha no login");
