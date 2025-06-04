@@ -9,7 +9,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       // Usando window.location para garantir limpeza completa do estado
-      window.location.href = "/login"
+      window.location.href = "/"
       return
     }
   }, [isAuthenticated, loading])
