@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     // Adicione esta linha para remover o token
     api.removeToken();
-    router.push("/login");
+    router.push("/");
   } catch (err: any) {
     setError(err.message || "Falha ao sair");
   } finally {
