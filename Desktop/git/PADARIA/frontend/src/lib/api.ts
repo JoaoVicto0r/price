@@ -39,10 +39,12 @@ class ApiClient {
     }
   }
 
+  /*
   // Health check simples
   async healthCheck() {
     return this.request<{ status: string }>("api/health")
   }
+*/
 
   // Método principal para fazer as requisições
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
