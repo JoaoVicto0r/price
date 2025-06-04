@@ -32,15 +32,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadUser = async () => {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    setLoading(false);
+    return;
+  }
+
   try {
+    api.setToken(token); // Configura o token no ApiClient antes da requisição
     const userProfile = await api.getProfile();
     setUser(userProfile);
   } catch (err: any) {
-    // Se for erro 401, faz logout automático
+    // Limpa tudo se houver erro 401
     if (err.message.includes('401')) {
-      await logout();
+      localStorage.removeItem('token');
+      api.removeToken();
+      setUser(null);
     }
-    setUser(null);
   } finally {
     setLoading(false);
   }
@@ -49,14 +58,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+ const login = async (email: string, password: string): Promise<boolean> => {
   setLoading(true);
   setError(null);
   try {
     const response = await api.login(email, password);
+    
+    // Armazena em 3 lugares para consistência
+    localStorage.setItem('token', response.access_token);
+    api.setToken(response.access_token);
     setUser(response.user);
-    // Adicione esta linha para armazenar o token no ApiClient
-    api.setToken(response.access_token); 
+    
+    // Redireciona aqui mesmo após login bem-sucedido
+    router.push('/receitas');
     return true;
   } catch (err: any) {
     setError(err.message || "Falha no login");
