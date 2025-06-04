@@ -32,33 +32,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadUser = async () => {
-      try {
-        const userProfile = await api.getProfile();
-        setUser(userProfile);
-      } catch (err) {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  try {
+    const userProfile = await api.getProfile();
+    setUser(userProfile);
+  } catch (err: any) {
+    // Se for erro 401, faz logout automático
+    if (err.message.includes('401')) {
+      await logout();
+    }
+    setUser(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
     loadUser();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.login(email, password);
-      setUser(response.user);
-      return true;
-    } catch (err: any) {
-      setError(err.message || "Falha no login");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError(null);
+  try {
+    const response = await api.login(email, password);
+    setUser(response.user);
+    // Adicione esta linha para armazenar o token no ApiClient
+    api.setToken(response.access_token); 
+    return true;
+  } catch (err: any) {
+    setError(err.message || "Falha no login");
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
 
   const register = async (userData: { 
     name: string; 
@@ -79,18 +85,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async () => {
-    setLoading(true);
-    try {
-      await api.logout();
-      setUser(null);
-      router.push("/login");
-    } catch (err: any) {
-      setError(err.message || "Falha ao sair");
-    } finally {
-      setLoading(false);
-    }
-  };
+ const logout = async () => {
+  setLoading(true);
+  try {
+    await api.logout();
+    setUser(null);
+    // Adicione esta linha para remover o token
+    api.removeToken();
+    router.push("/login");
+  } catch (err: any) {
+    setError(err.message || "Falha ao sair");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <AuthContext.Provider

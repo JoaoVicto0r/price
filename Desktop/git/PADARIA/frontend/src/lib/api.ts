@@ -101,12 +101,18 @@ class ApiClient {
   // === Auth methods ===
 
   async login(email: string, password: string) {
-  const data = await this.request<{ user: User }>("api/auth/login", { // Remova access_token
+  const response = await this.request<{ 
+    access_token: string,  // Verifique se é este o nome do campo
+    user: User 
+  }>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
-  return data;
-  }
+  
+  // Armazena o token no ApiClient
+  this.setToken(response.access_token);
+  return response;
+}
 
   async register(userData: {
     name: string
