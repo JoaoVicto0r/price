@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Plus, Search, MoreHorizontal, Eye } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import { useTickets } from "@/hooks/use-tickets"
+import { useTickets, type Ticket } from "@/hooks/use-tickets"
 import NewTicketModal from "./NewTicketModal"
 import TicketDetailModal from "./TicketDetailModal"
 
@@ -12,7 +12,7 @@ export default function EnhancedSupportePage() {
   const { tickets, addTicket, updateTicket, getStats } = useTickets()
   const [searchTerm, setSearchTerm] = useState("")
   const [showNewTicketModal, setShowNewTicketModal] = useState(false)
-  const [selectedTicket, setSelectedTicket] = useState(null)
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
 
   // Verificar se é admin (adapte conforme sua lógica)
@@ -27,16 +27,16 @@ export default function EnhancedSupportePage() {
       ticket.id.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleTicketCreated = (newTicket: any) => {
+  const handleTicketCreated = (newTicket: Ticket) => {
     addTicket(newTicket)
   }
 
-  const handleTicketUpdated = (updatedTicket: any) => {
+  const handleTicketUpdated = (updatedTicket: Ticket) => {
     updateTicket(updatedTicket)
     setSelectedTicket(updatedTicket)
   }
 
-  const handleViewTicket = (ticket: any) => {
+  const handleViewTicket = (ticket: Ticket) => {
     setSelectedTicket(ticket)
     setShowDetailModal(true)
   }

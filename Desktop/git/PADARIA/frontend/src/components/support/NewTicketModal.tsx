@@ -5,12 +5,27 @@ import type React from "react"
 import { useState } from "react"
 import { X } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import type { SupportTicket } from "@/types/user"
+
+// Definir interface local que corresponde ao seu código existente
+interface Ticket {
+  id: string
+  client: string
+  subject: string
+  priority: "Alta" | "Média" | "Baixa"
+  status: "Aberto" | "Em andamento" | "Resolvido"
+  date: string
+  description: string
+  userId?: string
+  userName?: string
+  adminNotes?: string
+  createdAt?: Date
+  updatedAt?: Date
+}
 
 interface NewTicketModalProps {
   isOpen: boolean
   onClose: () => void
-  onTicketCreated: (ticket: SupportTicket) => void
+  onTicketCreated: (ticket: Ticket) => void
 }
 
 export default function NewTicketModal({ isOpen, onClose, onTicketCreated }: NewTicketModalProps) {
@@ -25,7 +40,7 @@ export default function NewTicketModal({ isOpen, onClose, onTicketCreated }: New
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const newTicket: SupportTicket = {
+    const newTicket: Ticket = {
       id: `#${String(Date.now()).slice(-3)}`,
       client: formData.client,
       subject: formData.subject,

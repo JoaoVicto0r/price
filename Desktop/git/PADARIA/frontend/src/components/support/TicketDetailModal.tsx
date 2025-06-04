@@ -3,18 +3,19 @@
 import { useState } from "react"
 import { X, MessageCircle, Clock, CheckCircle } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import type { Ticket } from "@/hooks/use-tickets"
 
 interface TicketDetailModalProps {
   isOpen: boolean
   onClose: () => void
-  ticket: any
-  onTicketUpdated: (updatedTicket: any) => void
+  ticket: Ticket | null
+  onTicketUpdated: (updatedTicket: Ticket) => void
 }
 
 export default function TicketDetailModal({ isOpen, onClose, ticket, onTicketUpdated }: TicketDetailModalProps) {
   const { user } = useAuth()
   const [adminNotes, setAdminNotes] = useState("")
-  const [newStatus, setNewStatus] = useState(ticket?.status || "Aberto")
+  const [newStatus, setNewStatus] = useState<"Aberto" | "Em andamento" | "Resolvido">(ticket?.status || "Aberto")
 
   // Verificar se é admin (adapte conforme sua lógica)
   const isAdmin = user?.role === "admin" || user?.email === "admin@price.com"
@@ -22,7 +23,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onTicketUpd
   const handleStatusUpdate = () => {
     if (!ticket) return
 
-    const updatedTicket = {
+    const updatedTicket: Ticket = {
       ...ticket,
       status: newStatus,
       updatedAt: new Date(),
@@ -31,7 +32,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onTicketUpd
     // Atualizar no localStorage
     const savedTickets = localStorage.getItem("price_support_tickets")
     const allTickets = savedTickets ? JSON.parse(savedTickets) : []
-    const updatedTickets = allTickets.map((t: any) => (t.id === ticket.id ? updatedTicket : t))
+    const updatedTickets = allTickets.map((t: Ticket) => (t.id === ticket.id ? updatedTicket : t))
     localStorage.setItem("price_support_tickets", JSON.stringify(updatedTickets))
 
     onTicketUpdated(updatedTicket)
@@ -40,7 +41,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onTicketUpd
   const handleAddNotes = () => {
     if (!ticket || !adminNotes.trim()) return
 
-    const updatedTicket = {
+    const updatedTicket: Ticket = {
       ...ticket,
       adminNotes,
       updatedAt: new Date(),
@@ -49,7 +50,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onTicketUpd
     // Atualizar no localStorage
     const savedTickets = localStorage.getItem("price_support_tickets")
     const allTickets = savedTickets ? JSON.parse(savedTickets) : []
-    const updatedTickets = allTickets.map((t: any) => (t.id === ticket.id ? updatedTicket : t))
+    const updatedTickets = allTickets.map((t: Ticket) => (t.id === ticket.id ? updatedTicket : t))
     localStorage.setItem("price_support_tickets", JSON.stringify(updatedTickets))
 
     onTicketUpdated(updatedTicket)
@@ -135,7 +136,7 @@ export default function TicketDetailModal({ isOpen, onClose, ticket, onTicketUpd
                 <div className="flex gap-4">
                   <select
                     value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
+                    onChange={(e) => setNewStatus(e.target.value as "Aberto" | "Em andamento" | "Resolvido")}
                     className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:outline-none tracking-wider font-['Telegraf']"
                   >
                     <option value="Aberto">Aberto</option>
