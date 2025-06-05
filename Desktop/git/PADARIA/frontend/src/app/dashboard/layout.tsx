@@ -1,4 +1,4 @@
-import Header from "@/components/layout/dashboard-layout";
+import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar"; // Crie este componente
 import { Toaster } from "@/components/ui/toaster"; // Opcional para notificações
 import "@/app/globals.css";
@@ -11,9 +11,7 @@ export default function DashboardLayout({
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header fixo no topo */}
-        <DashboardLayout>
-      {children}
-    </DashboardLayout>
+      <Header />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - opcional */}
