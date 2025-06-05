@@ -11,7 +11,9 @@ export default function DashboardLayout({
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header fixo no topo */}
-      <Header />
+        <DashboardLayout>
+      {children}
+    </DashboardLayout>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - opcional */}
