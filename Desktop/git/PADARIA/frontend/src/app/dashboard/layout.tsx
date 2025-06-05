@@ -1,5 +1,5 @@
-import Header from "@/components/header";
-import Sidebar from "@/components/sidebar"; // Crie este componente
+import Header from "@/components/layout/dashboard-layout";
+import Sidebar from "@/components/layout/sidebar"; // Crie este componente
 import { Toaster } from "@/components/ui/toaster"; // Opcional para notificações
 import "@/app/globals.css";
 
