@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Sidebar } from "./sidebar"
+import  Sidebar  from "./sidebar"
 import { ApiStatus } from "../common/api-status"
 
 interface DashboardLayoutProps {
