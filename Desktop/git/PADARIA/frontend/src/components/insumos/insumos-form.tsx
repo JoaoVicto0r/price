@@ -32,12 +32,12 @@ interface Supplier {
 }
 
 interface InsumoFormProps {
-  onSubmit: (data: Ingredient) => Promise<void>
-  initialData?: Partial<Ingredient>
-  loading?: boolean
-  onCancel?: () => void
-  categories?: Category[]
-  suppliers?: Supplier[]
+  onSubmit: (data: InsumoFormValues) => Promise<void>;
+  initialData?: InsumoFormValues;
+  loading?: boolean;
+  onCancel?: () => void;
+  categories?: Category[];
+  suppliers?: Supplier[];
 }
 
 const units = [
