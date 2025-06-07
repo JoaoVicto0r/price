@@ -1,42 +1,34 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
-import { useState } from "react"
-import { useAuth } from "@/hooks/use-auth"
-
-export default function LoginFormFixed() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const { login, error: authError, loading, clearError } = useAuth()
+export default function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, error: authError, loading } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    clearError() // Limpa erros anteriores
-
-    console.log("Formulário submetido com:", { email, password: "***" })
-
-    try {
-      const success = await login(email, password)
-      console.log("Resultado do login:", success)
-
-      if (success) {
-        console.log("Login bem-sucedido, redirecionamento será feito automaticamente")
-        // Limpa o formulário
-        setEmail("")
-        setPassword("")
-      }
-    } catch (error) {
-      console.error("Erro inesperado no login:", error)
+  e.preventDefault()
+  
+  try {
+    const success = await login(email, password)
+    if (success) {
+      // Redirecionamento agora é tratado pelo próprio login
+      return
     }
+  } finally {
+    // Mantém o estado limpo após tentativa
+    setPassword("")
   }
+}
 
   return (
     <div className="w-[1920px] h-[1080px] relative bg-white outline outline-1 outline-offset-[-1px] outline-zinc-300 overflow-hidden">
-      {/* Fundo e elementos decorativos */}
+      {/* Fundo e elementos decorativos (mantidos do original) */}
       <div className="w-[1920px] h-[1080px] left-0 top-0 absolute bg-indigo-500/50" />
       <div className="w-[1325px] h-[1080px] left-[648px] top-0 absolute bg-white rounded-[50px]" />
-
+      
       {/* Texto de apresentação */}
       <div className="w-[473px] h-60 left-[80px] top-[203px] absolute justify-start">
         <span className="text-white text-5xl font-normal font-['Telegraf'] leading-[60px] tracking-widest">
@@ -81,7 +73,7 @@ export default function LoginFormFixed() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-[575px] left-[0px] top-[6px] absolute focus:outline-none placeholder:text-neutral-400 font-normal font-['Telegraf'] leading-10 tracking-wider bg-transparent"
+              className="w-[575px] left-[0px] top-[6px] absolute focus:outline-none placeholder:text-neutral-400 font-normal font-['Telegraf'] leading-10 tracking-wider"
               disabled={loading}
               required
               autoComplete="username"
@@ -102,7 +94,7 @@ export default function LoginFormFixed() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-[575px] left-[0px] top-[6px] absolute focus:outline-none placeholder:text-neutral-400 font-normal font-['Telegraf'] leading-10 tracking-wider bg-transparent"
+              className="w-[575px] left-[0px] top-[6px] absolute focus:outline-none placeholder:text-neutral-400 font-normal font-['Telegraf'] leading-10 tracking-wider"
               disabled={loading}
               required
               autoComplete="current-password"
@@ -112,36 +104,25 @@ export default function LoginFormFixed() {
         </div>
 
         {/* Mensagem de erro */}
-        {authError && (
-          <div className="left-[1023px] top-[610px] absolute w-[575px] p-3 bg-red-50 text-red-600 rounded-lg border border-red-200">
-            <p className="font-medium text-sm">{authError}</p>
+        {(authError) && (
+          <div className="left-[1023px] top-[660px] absolute w-[575px] p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
+            <p className="font-medium">{authError}</p>
           </div>
         )}
 
         {/* Botão de submit */}
         <button
           type="submit"
-          disabled={loading || !email.trim() || !password.trim()}
-          className={`w-[575px] h-14 left-[1023px] top-[650px] absolute flex items-center justify-center text-white text-base font-extrabold font-['Telegraf'] leading-10 tracking-wider rounded-lg transition ${
-            loading || !email.trim() || !password.trim()
-              ? "bg-indigo-400 cursor-not-allowed"
-              : "bg-indigo-500 hover:bg-indigo-600 cursor-pointer"
+          disabled={loading}
+          className={`w-[575px] h-14 left-[1023px] top-[640px] absolute flex items-center justify-center text-white text-base font-extrabold font-['Telegraf'] leading-10 tracking-wider rounded-lg transition ${
+            loading ? "bg-indigo-400" : "bg-indigo-500 hover:bg-indigo-600"
           }`}
         >
           {loading ? (
             <>
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               Processando...
             </>
@@ -160,5 +141,5 @@ export default function LoginFormFixed() {
         S
       </div>
     </div>
-  )
+  );
 }

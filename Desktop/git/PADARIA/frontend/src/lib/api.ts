@@ -5,142 +5,114 @@ export interface User {
   role: string
   createdAt?: string
   updatedAt?: string
+  // Adicione outros campos que seu usuário possa ter
 }
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://price-d26o.onrender.com"
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://price-d26o.onrender.com/api";
 
 class ApiClient {
   private baseURL: string
   private token: string | null = null
-  private timeoutMs = 10000
+  private timeoutMs = 10000 // 10 segundos timeout padrão
 
   constructor(baseURL: string, token?: string | null) {
     this.baseURL = baseURL
     this.token = token || null
-
-    // Carrega token do localStorage na inicialização
-    if (typeof window !== "undefined") {
-      const savedToken = localStorage.getItem("token")
-      if (savedToken) {
-        this.token = savedToken
-        console.log("Token carregado do localStorage:", savedToken.substring(0, 20) + "...")
-      }
-    }
   }
 
   setToken(token: string) {
-    console.log("Token setado:", token ? token.substring(0, 20) + "..." : "undefined")
+     console.log("Token setado:", token)
     this.token = token
-
-    // Persiste no localStorage
-    if (typeof window !== "undefined") {
-      if (token) {
-        localStorage.setItem("token", token)
-      } else {
-        localStorage.removeItem("token")
-      }
-    }
   }
 
   removeToken() {
-    console.log("Token removido")
     this.token = null
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
+  }
+
+  // Implementação logout: remove token local e avisa backend
+  async logout() {
+    this.removeToken()
+    try {
+      await this.request<{ message: string }>("/auth/logout", { method: "POST" })
+    } catch {
+      // Ignora erros no logout para não quebrar fluxo
     }
   }
 
-  getToken(): string | null {
-    return this.token
+  /*
+  // Health check simples
+  async healthCheck() {
+    return this.request<{ status: string }>("api/health")
   }
+*/
 
   // Método principal para fazer as requisições
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    // Remove barra dupla se existir
-    const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint
-    const url = `${this.baseURL}/${cleanEndpoint}`
+    const url = `${this.baseURL}${endpoint}`
 
-    console.log(`Fazendo requisição para: ${url}`)
-    console.log(`Token atual: ${this.token ? this.token.substring(0, 20) + "..." : "Nenhum"}`)
-
+    // Controla timeout via AbortController
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs)
 
+    // Configura headers, incluindo Authorization se token existir
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
       ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      ...((options.method && ["POST", "PUT", "PATCH"].includes(options.method.toUpperCase()))
+        ? { "Content-Type": "application/json" }
+        : {}),
       ...(options.headers as Record<string, string>),
     }
-
-    console.log("Headers da requisição:", headers)
 
     try {
       const response = await fetch(url, {
         ...options,
         headers,
-        credentials: "include",
+        credentials: "include", // mantém cookies se for o caso
         signal: controller.signal,
       })
-
       clearTimeout(timeout)
 
-      console.log(`Resposta recebida - Status: ${response.status}`)
-
       if (!response.ok) {
+        // Tenta pegar o JSON com erro, se falhar usa mensagem padrão
         let errorMessage = `HTTP error! status: ${response.status}`
         try {
           const errorData = await response.json()
           if (errorData?.message) errorMessage = errorData.message
-          console.error("Erro da API:", errorData)
-        } catch (parseError) {
-          console.error("Erro ao parsear resposta de erro:", parseError)
-        }
-
-        // Se for 401, remove o token inválido
-        if (response.status === 401) {
-          console.log("Token inválido (401), removendo...")
-          this.removeToken()
-        }
-
+        } catch {}
         throw new Error(errorMessage)
       }
 
+      // Se resposta for vazia (204 No Content), retorna vazio
       if (response.status === 204) {
         return {} as T
       }
 
-      const data = await response.json()
-      console.log("Dados recebidos:", data)
-      return data
+      return await response.json()
     } catch (error: any) {
       clearTimeout(timeout)
-      console.error("Erro na requisição:", error)
-
       if (error.name === "AbortError") {
         throw new Error("Request timeout")
       }
+      // Repassa outros erros
       throw error
     }
   }
 
   // === Auth methods ===
+
   async login(email: string, password: string) {
-    console.log("Tentando fazer login...")
-    const data = await this.request<{
-      access_token: string
-      user: User
-    }>("api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    })
-
-    // Define o token automaticamente após login bem-sucedido
-    if (data.access_token) {
-      this.setToken(data.access_token)
-    }
-
-    return data
-  }
+  const response = await this.request<{ 
+    access_token: string,  // Verifique se é este o nome do campo
+    user: User 
+  }>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+  
+  // Armazena o token no ApiClient
+  this.setToken(response.access_token);
+  return response;
+}
 
   async register(userData: {
     name: string
@@ -150,64 +122,230 @@ class ApiClient {
   }) {
     const data = await this.request<{
       access_token: string
-      user: User
-    }>("api/auth/register", {
+      user: { id: string; email: string; name: string; role: string }
+    }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     })
-
-    if (data.access_token) {
-      this.setToken(data.access_token)
-    }
-
+    this.setToken(data.access_token)
     return data
   }
 
-  async logout() {
-    try {
-      await this.request<{ message: string }>("api/auth/logout", {
-        method: "POST",
-      })
-    } catch (error) {
-      console.log("Erro no logout (ignorado):", error)
-    } finally {
-      this.removeToken()
-    }
-  }
+  // === User methods ===
 
   async getProfile() {
-    return this.request<User>("api/users/profile")
+    return this.request<{
+      id: string
+      email: string
+      name: string
+      role: string
+    }>("/users/profile")
+  }
+
+  async getUserStats() {
+    return this.request<{
+      recipesCount: number
+      ingredientsCount: number
+      suppliersCount: number
+    }>("/users/stats")
   }
 
   // === Recipes methods ===
+
   async getRecipes(categoryId?: string) {
     const params = new URLSearchParams()
     if (categoryId) params.append("categoryId", categoryId)
     const queryString = params.toString()
-    return this.request<any[]>(`api/recipes${queryString ? `?${queryString}` : ""}`)
+    return this.request<Recipe[]>(`/recipes${queryString ? `?${queryString}` : ""}`)
   }
 
-  // Health check
-  async healthCheck() {
-    return this.request<{ status: string }>("api/health")
+  async getRecipe(id: string) {
+    return this.request<Recipe>(`/recipes/${id}`)
   }
 
-  // Método para testar autenticação
-  async testAuth() {
-    try {
-      const profile = await this.getProfile()
-      return { success: true, user: profile }
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : "Erro desconhecido" }
-    }
+  async createRecipe(data: CreateRecipeData) {
+    return this.request<Recipe>("/recipes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateRecipe(id: string, data: Partial<CreateRecipeData>) {
+    return this.request<Recipe>(`/recipes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteRecipe(id: string) {
+    return this.request<{ message: string }>(`/recipes/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  async getRecipeStats() {
+    return this.request<{
+      totalRecipes: number
+      activeRecipes: number
+      inactiveRecipes: number
+      averageMargin: number
+      totalValue: number
+    }>("/recipes/stats")
+  }
+
+  // === Ingredients methods ===
+
+  async getIngredients(categoryId?: string, lowStock?: boolean) {
+    const params = new URLSearchParams()
+    if (categoryId) params.append("categoryId", categoryId)
+    if (lowStock) params.append("lowStock", "true")
+    const queryString = params.toString()
+
+    return this.request<Ingredient[]>(`/ingredients${queryString ? `?${queryString}` : ""}`)
+  }
+
+  async getIngredient(id: string) {
+    return this.request<Ingredient>(`/ingredients/${id}`)
+  }
+
+  async createIngredient(data: CreateIngredientData) {
+    return this.request<Ingredient>("/ingredients", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateIngredient(id: string, data: Partial<CreateIngredientData>) {
+    return this.request<Ingredient>(`/ingredients/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteIngredient(id: string) {
+    return this.request<{ message: string }>(`/ingredients/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  async updateStock(id: string, quantity: number, operation: "add" | "subtract") {
+    return this.request<Ingredient>(`/ingredients/${id}/stock`, {
+      method: "PATCH",
+      body: JSON.stringify({ quantity, operation }),
+    })
+  }
+
+  async getIngredientStats() {
+    return this.request<{
+      totalIngredients: number
+      lowStockCount: number
+      totalStockValue: number
+      categoriesCount: number
+    }>("/ingredients/stats")
+  }
+
+  async getStockAlerts() {
+    return this.request<{
+      lowStock: Ingredient[]
+      expiringSoon: Ingredient[]
+      alerts: {
+        lowStockCount: number
+        expiringSoonCount: number
+      }
+    }>("/ingredients/alerts")
+  }
+
+  // === Categories methods ===
+
+  async getCategories() {
+    return this.request<Category[]>("/categories")
+  }
+
+  async createCategory(data: { name: string; description?: string }) {
+    return this.request<Category>("/categories", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  // === Suppliers methods ===
+
+  async getSuppliers() {
+    return this.request<Supplier[]>("/suppliers")
+  }
+
+  async createSupplier(data: CreateSupplierData) {
+    return this.request<Supplier>("/suppliers", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  // === Calculator methods ===
+
+  async calculateRecipeCosts(recipeId: string) {
+    return this.request<{
+      totalCost: number
+      operationalCost: number
+      finalCost: number
+      sellingPrice: number
+      profitMargin: number
+      netProfit: number
+      costPerServing: number
+      pricePerServing: number
+    }>(`/calculator/recipe/${recipeId}/calculate`, {
+      method: "POST",
+    })
+  }
+
+  async simulateRecipeCost(data: {
+    ingredients: { ingredientId: string; quantity: number }[]
+    operationalCost?: number
+    servings?: number
+  }) {
+    return this.request<{
+      ingredients: Array<{
+        ingredientId: string
+        name: string
+        quantity: number
+        unitCost: number
+        totalCost: number
+      }>
+      totalIngredientsCost: number
+      operationalCost: number
+      finalCost: number
+      costPerServing: number
+    }>("/calculator/simulate", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getMarginAnalysis() {
+    return this.request<{
+      analysis: {
+        totalRecipes: number
+        averageMargin: number
+        totalRevenue: number
+        totalCost: number
+        totalProfit: number
+        bestMargin: number
+        worstMargin: number
+        profitableRecipes: number
+      }
+      recipes: Array<{
+        id: string
+        name: string
+        finalCost: number
+        sellingPrice: number
+        profitMargin: number
+        netProfit: number
+      }>
+    }>("/calculator/margin-analysis")
   }
 }
 
 export const api = new ApiClient(API_BASE_URL)
-
-// Exporta uma instância global
-export default api
-
 
 // -- Os tipos podem continuar iguais --
 
