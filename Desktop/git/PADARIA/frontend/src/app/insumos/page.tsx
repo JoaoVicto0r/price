@@ -43,37 +43,28 @@ export default function InsumosPage() {
 )
 
   // Handler para criar insumo
-  const handleCreateInsumo = async (data: InsumoFormValues) => {
-  setIsSubmitting(true);
-  try {
-    // Converta para o tipo Ingredient se necessário
-    const ingredientData: Ingredient = {
-      ...data,
-      id: data.id || '', // Forneça um valor padrão para id
-      // Outras conversões necessárias
-    };
-    await createIngredient(ingredientData);
-    setShowForm(false);
-  } finally {
-    setIsSubmitting(false);
+  const handleCreateInsumo = async (data: Ingredient) => {
+    setIsSubmitting(true)
+    try {
+      await createIngredient(data)
+      setShowForm(false)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-};
 
-const handleUpdateInsumo = async (data: InsumoFormValues) => {
-  if (!editingInsumo) return;
+  // Handler para atualizar insumo
+  const handleUpdateInsumo = async (data: Ingredient) => {
+    if (!editingInsumo) return
 
-  setIsSubmitting(true);
-  try {
-    const ingredientData: Ingredient = {
-      ...data,
-      id: editingInsumo, // Garante que usaremos o ID correto
-    };
-    await updateIngredient(editingInsumo, ingredientData);
-    setEditingInsumo(null);
-  } finally {
-    setIsSubmitting(false);
+    setIsSubmitting(true)
+    try {
+      await updateIngredient(editingInsumo, data)
+      setEditingInsumo(null)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-};
 
   // Handler para deletar insumo
   const handleDeleteInsumo = async (id: string) => {

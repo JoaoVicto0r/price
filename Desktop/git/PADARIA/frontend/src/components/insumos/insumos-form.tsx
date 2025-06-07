@@ -1,43 +1,16 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { X, Save, Calculator, Package, DollarSign } from "lucide-react"
-
-// Interfaces baseadas no seu código existente
-interface Ingredient {
-  id?: string
-  name: string
-  description?: string
-  unit: string
-  unitCost: number
-  stock: number
-  minStock: number
-  isActive: boolean
-  categoryId?: string
-  supplierId?: string
-  createdAt?: Date
-  updatedAt?: Date
-}
-
-interface Category {
-  id: string
-  name: string
-}
-
-interface Supplier {
-  id: string
-  name: string
-}
+import type { Ingredient, Category, Supplier } from "@/lib/api"
 
 interface InsumoFormProps {
-  onSubmit: (data: InsumoFormValues) => Promise<void>;
-  initialData?: InsumoFormValues;
-  loading?: boolean;
-  onCancel?: () => void;
-  categories?: Category[];
-  suppliers?: Supplier[];
+  onSubmit: (data: Ingredient) => Promise<void>
+  initialData?: Partial<Ingredient>
+  loading?: boolean
+  onCancel?: () => void
+  categories?: Category[]
+  suppliers?: Supplier[]
 }
 
 const units = [
@@ -90,16 +63,13 @@ export function InsumoForm({
     let pricePerUnit = 0
 
     if (isWeightBased) {
-      // Para kg/g - unitCost é preço por kg/g
       totalValue = stock * unitCost
       pricePerKg = unitCost
       pricePerUnit = unitCost
     } else {
-      // Para unidades - unitCost é preço por unidade
       totalValue = stock * unitCost
       pricePerUnit = unitCost
-      // Se tiver peso estimado, calcular preço por kg (opcional)
-      pricePerKg = unitCost // Pode ser ajustado conforme necessário
+      pricePerKg = unitCost
     }
 
     setCalculations({
@@ -114,7 +84,6 @@ export function InsumoForm({
     e.preventDefault()
     setError("")
 
-    // Validações
     if (!formData.name?.trim()) {
       setError("Nome do insumo é obrigatório")
       return
@@ -157,7 +126,11 @@ export function InsumoForm({
             </h3>
           </div>
           {onCancel && (
-            <button onClick={onCancel} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+            <button 
+              onClick={onCancel} 
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              disabled={loading}
+            >
               <X className="w-5 h-5 text-white" />
             </button>
           )}
@@ -172,7 +145,7 @@ export function InsumoForm({
           </div>
         )}
 
-        {/* Informações Básicas */}
+        {/* Basic Information */}
         <div className="space-y-4">
           <h4 className="text-lg font-extrabold text-neutral-800 tracking-wider flex items-center gap-2">
             <div className="w-1 h-6 bg-indigo-500 rounded"></div>
@@ -189,8 +162,9 @@ export function InsumoForm({
                 value={formData.name || ""}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                disabled={loading}
                 placeholder="Ex: Farinha de Trigo Especial"
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all"
+                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all disabled:opacity-50"
               />
             </div>
 
@@ -199,7 +173,8 @@ export function InsumoForm({
               <select
                 value={formData.categoryId || ""}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all disabled:opacity-50"
               >
                 <option value="">Selecione uma categoria</option>
                 {categories.map((category) => (
@@ -217,13 +192,14 @@ export function InsumoForm({
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
+              disabled={loading}
               placeholder="Descrição detalhada do insumo..."
-              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all resize-none"
+              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all resize-none disabled:opacity-50"
             />
           </div>
         </div>
 
-        {/* Estoque e Unidade */}
+        {/* Stock and Measurements */}
         <div className="space-y-4">
           <h4 className="text-lg font-extrabold text-neutral-800 tracking-wider flex items-center gap-2">
             <div className="w-1 h-6 bg-green-500 rounded"></div>
@@ -242,7 +218,8 @@ export function InsumoForm({
                 value={formData.stock || 0}
                 onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
                 required
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all disabled:opacity-50"
               />
             </div>
 
@@ -252,7 +229,8 @@ export function InsumoForm({
                 value={formData.unit || ""}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                 required
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all disabled:opacity-50"
               >
                 <option value="">Selecione uma unidade</option>
                 {units.map((unit) => (
@@ -274,7 +252,8 @@ export function InsumoForm({
                 value={formData.minStock || 0}
                 onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
                 required
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none tracking-wider transition-all ${
+                disabled={loading}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:outline-none tracking-wider transition-all disabled:opacity-50 ${
                   isLowStock
                     ? "border-red-300 focus:border-red-500 focus:ring-red-200"
                     : "border-neutral-300 focus:border-indigo-500 focus:ring-indigo-200"
@@ -285,7 +264,7 @@ export function InsumoForm({
           </div>
         </div>
 
-        {/* Preços e Cálculos */}
+        {/* Prices and Calculations */}
         <div className="space-y-4">
           <h4 className="text-lg font-extrabold text-neutral-800 tracking-wider flex items-center gap-2">
             <div className="w-1 h-6 bg-yellow-500 rounded"></div>
@@ -306,7 +285,8 @@ export function InsumoForm({
                   value={formData.unitCost || 0}
                   onChange={(e) => setFormData({ ...formData, unitCost: Number(e.target.value) })}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all"
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all disabled:opacity-50"
                 />
               </div>
             </div>
@@ -316,7 +296,8 @@ export function InsumoForm({
               <select
                 value={formData.supplierId || ""}
                 onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all"
+                disabled={loading}
+                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none tracking-wider transition-all disabled:opacity-50"
               >
                 <option value="">Selecione um fornecedor</option>
                 {suppliers.map((supplier) => (
@@ -328,7 +309,7 @@ export function InsumoForm({
             </div>
           </div>
 
-          {/* Painel de Cálculos */}
+          {/* Calculations Panel */}
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <Calculator className="w-5 h-5 text-indigo-600" />
@@ -382,7 +363,8 @@ export function InsumoForm({
               id="isActive"
               checked={formData.isActive || false}
               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-neutral-300 rounded"
+              disabled={loading}
+              className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-neutral-300 rounded disabled:opacity-50"
             />
             <label htmlFor="isActive" className="text-sm font-extrabold text-neutral-700 tracking-wider">
               Insumo ativo no sistema
@@ -390,7 +372,7 @@ export function InsumoForm({
           </div>
         </div>
 
-        {/* Botões */}
+        {/* Buttons */}
         <div className="flex gap-4 pt-6 border-t border-neutral-200">
           <button
             type="submit"
