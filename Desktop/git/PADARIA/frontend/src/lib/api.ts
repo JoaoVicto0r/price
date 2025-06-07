@@ -33,7 +33,7 @@ class ApiClient {
   async logout() {
     this.removeToken()
     try {
-      await this.request<{ message: string }>("api/auth/logout", { method: "POST" })
+      await this.request<{ message: string }>("/auth/logout", { method: "POST" })
     } catch {
       // Ignora erros no logout para não quebrar fluxo
     }
@@ -201,11 +201,11 @@ class ApiClient {
     if (lowStock) params.append("lowStock", "true")
     const queryString = params.toString()
 
-    return this.request<Ingredient[]>(`api/ingredients${queryString ? `?${queryString}` : ""}`)
+    return this.request<Ingredient[]>(`/ingredients${queryString ? `?${queryString}` : ""}`)
   }
 
   async getIngredient(id: string) {
-    return this.request<Ingredient>(`api/ingredients/${id}`)
+    return this.request<Ingredient>(`/ingredients/${id}`)
   }
 
   async createIngredient(data: CreateIngredientData) {
