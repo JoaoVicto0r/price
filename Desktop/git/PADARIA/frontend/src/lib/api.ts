@@ -11,124 +11,118 @@ export interface User {
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://price-d26o.onrender.com/api";
 
 class ApiClient {
-  private baseURL: string
-  private token: string | null = null
-  private timeoutMs = 10000 // 10 segundos timeout padrão
+  private baseURL: string;
+  private token: string | null = null;
+  private timeoutMs = 10000;
 
   constructor(baseURL: string, token?: string | null) {
-    this.baseURL = baseURL
-    this.token = token || null
+    this.baseURL = baseURL;
+    this.token = token || null;
   }
 
   setToken(token: string) {
-     console.log("Token setado:", token)
-    this.token = token
+    console.log("Token setado:", token);
+    this.token = token;
   }
 
   removeToken() {
-    this.token = null
+    this.token = null;
   }
 
-  // Implementação logout: remove token local e avisa backend
   async logout() {
-    this.removeToken()
+    this.removeToken();
     try {
-      await this.request<{ message: string }>("/auth/logout", { method: "POST" })
-    } catch {
-      // Ignora erros no logout para não quebrar fluxo
+      await this.request<{ message: string }>("/auth/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   }
 
-  /*
-  // Health check simples
-  async healthCheck() {
-    return this.request<{ status: string }>("api/health")
-  }
-*/
-
-  // Método principal para fazer as requisições
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
-    // Controla timeout via AbortController
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs)
+    const headers = new Headers({
+      'Accept': 'application/json',
+      ...(options.headers || {})
+    });
 
-    // Configura headers, incluindo Authorization se token existir
-    const headers: Record<string, string> = {
-      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-      ...((options.method && ["POST", "PUT", "PATCH"].includes(options.method.toUpperCase()))
-        ? { "Content-Type": "application/json" }
-        : {}),
-      ...(options.headers as Record<string, string>),
+    if (options.method && ["POST", "PUT", "PATCH"].includes(options.method.toUpperCase())) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    if (this.token) {
+      headers.set('Authorization', `Bearer ${this.token}`);
     }
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
         ...options,
         headers,
-        credentials: "include", // mantém cookies se for o caso
+        credentials: 'include',
         signal: controller.signal,
-      })
-      clearTimeout(timeout)
+      });
+
+      clearTimeout(timeout);
 
       if (!response.ok) {
-        // Tenta pegar o JSON com erro, se falhar usa mensagem padrão
-        let errorMessage = `HTTP error! status: ${response.status}`
-        try {
-          const errorData = await response.json()
-          if (errorData?.message) errorMessage = errorData.message
-        } catch {}
-        throw new Error(errorMessage)
+        if (response.status === 401) {
+          this.handleUnauthorizedError();
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      // Se resposta for vazia (204 No Content), retorna vazio
-      if (response.status === 204) {
-        return {} as T
+      return response.status === 204 ? {} as T : await response.json();
+    } catch (error: unknown) {
+      clearTimeout(timeout);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Request timeout');
+        }
+        throw error;
       }
-
-      return await response.json()
-    } catch (error: any) {
-      clearTimeout(timeout)
-      if (error.name === "AbortError") {
-        throw new Error("Request timeout")
-      }
-      // Repassa outros erros
-      throw error
+      throw new Error('Unknown error occurred');
     }
   }
 
-  // === Auth methods ===
+  private handleUnauthorizedError() {
+    console.error('Unauthorized access - redirecting to login');
+    this.removeToken();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  }
 
+  // Métodos de autenticação
   async login(email: string, password: string) {
-  const response = await this.request<{ 
-    access_token: string,  // Verifique se é este o nome do campo
-    user: User 
-  }>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-  
-  // Armazena o token no ApiClient
-  this.setToken(response.access_token);
-  return response;
-}
+    const response = await this.request<{ 
+      access_token: string,
+      user: User 
+    }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    
+    this.setToken(response.access_token);
+    return response;
+  }
 
   async register(userData: {
-    name: string
-    email: string
-    password: string
-    role?: string
+    name: string;
+    email: string;
+    password: string;
+    role?: string;
   }) {
     const data = await this.request<{
-      access_token: string
-      user: { id: string; email: string; name: string; role: string }
+      access_token: string;
+      user: User;
     }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
-    })
-    this.setToken(data.access_token)
-    return data
+    });
+    this.setToken(data.access_token);
+    return data;
   }
 
   // === User methods ===
