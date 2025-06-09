@@ -20,8 +20,20 @@ async function bootstrap() {
 
   // ===== Configurações de Segurança =====
   app.use(helmet());
-  app.use(cookieParser());
+  app.use(cookieParser(configService.get('COOKIE_SECRET') || 'defaultSecret', {
+    httpOnly: true,
+    secure: configService.get('NODE_ENV') === 'production',
+    sameSite: configService.get('NODE_ENV') === 'production' ? 'none' : 'lax',
+  }));
   app.use(compression());
+
+  // Middleware de log para depuração
+  app.use((req, res, next) => {
+    logger.debug(`Incoming request: ${req.method} ${req.url}`);
+    logger.debug(`Cookies: ${JSON.stringify(req.cookies)}`);
+    logger.debug(`Auth header: ${req.headers['authorization']}`);
+    next();
+  });
 
   // ===== Configuração de CORS =====
   const allowedOrigins = [
@@ -47,9 +59,15 @@ async function bootstrap() {
       'Content-Type',
       'Authorization',
       'X-Requested-With',
-      'X-CSRF-Token'
+      'X-CSRF-Token',
+      'Set-Cookie'
     ],
-    exposedHeaders: ['Authorization', 'Set-Cookie', 'X-Total-Count'],
+    exposedHeaders: [
+      'Authorization', 
+      'Set-Cookie', 
+      'X-Total-Count',
+      'X-Refresh-Token'
+    ],
   });
 
   // ===== Validação Global =====
@@ -61,7 +79,6 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-      disableErrorMessages: configService.get('NODE_ENV') === 'production',
     }),
   );
 
@@ -74,13 +91,18 @@ async function bootstrap() {
       .setTitle('API Padaria')
       .setDescription('Sistema de gerenciamento de padaria')
       .setVersion('1.0')
-      .addBearerAuth()
-      .addCookieAuth('auth_token')
+      .addCookieAuth('auth_token', {
+        type: 'apiKey',
+        in: 'cookie',
+        name: 'auth_token',
+        description: 'Token de autenticação via cookie'
+      })
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api-docs', app, document, {
       swaggerOptions: {
+        withCredentials: true, // Permite enviar cookies
         persistAuthorization: true,
         tagsSorter: 'alpha',
         operationsSorter: 'method',
@@ -92,7 +114,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
 
   // ===== Verificação de Variáveis =====
-  const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL'];
+  const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL', 'COOKIE_SECRET'];
   requiredEnvVars.forEach((envVar) => {
     if (!configService.get(envVar)) {
       logger.error(`Variável de ambiente ${envVar} não configurada`);
@@ -108,6 +130,7 @@ async function bootstrap() {
   logger.log(`🛠  Ambiente: ${configService.get('NODE_ENV') || 'development'}`);
   logger.log(`🚀 API rodando em: http://localhost:${port}`);
   logger.log(`📚 Swagger disponível em: http://localhost:${port}/api-docs`);
+  logger.log(`🍪 Cookie auth habilitado`);
   logger.log(`🛡️  CORS habilitado para: ${allowedOrigins.join(', ')}`);
 }
 
