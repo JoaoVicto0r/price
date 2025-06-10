@@ -1,0 +1,229 @@
+.
+|-- backend
+|   |-- Desktop
+|   |   `-- git
+|   |       `-- PADARIA
+|   |           |-- frontend
+|   |           |   |-- package-lock.json
+|   |           |   |-- package.json
+|   |           |   |-- src
+|   |           |   |   |-- app
+|   |           |   |   |   |-- dashboard
+|   |           |   |   |   |   |-- layout.tsx
+|   |           |   |   |   |   `-- page.tsx
+|   |           |   |   |   |-- middleware.ts
+|   |           |   |   |   `-- receitas
+|   |           |   |   |       `-- page.tsx
+|   |           |   |   |-- components
+|   |           |   |   |   |-- auth
+|   |           |   |   |   |   `-- loginform.tsx
+|   |           |   |   |   |-- registerform.tsx
+|   |           |   |   |   |-- sidebar.tsx
+|   |           |   |   |   `-- ui
+|   |           |   |   |       `-- toaster.tsx
+|   |           |   |   |-- hooks
+|   |           |   |   |   `-- use-auth.tsx
+|   |           |   |   `-- lib
+|   |           |   |       `-- api.ts
+|   |           |   `-- tsconfig.json
+|   |           `-- price
+|   |-- README.md
+|   |-- eslint.config.mjs
+|   |-- generated
+|   |   `-- prisma
+|   |       |-- client.d.ts
+|   |       |-- client.js
+|   |       |-- default.d.ts
+|   |       |-- default.js
+|   |       |-- edge.d.ts
+|   |       |-- edge.js
+|   |       |-- index-browser.js
+|   |       |-- index.d.ts
+|   |       |-- index.js
+|   |       |-- package.json
+|   |       |-- query_engine-windows.dll.node
+|   |       |-- runtime
+|   |       |   |-- edge-esm.js
+|   |       |   |-- edge.js
+|   |       |   |-- index-browser.d.ts
+|   |       |   |-- index-browser.js
+|   |       |   |-- library.d.ts
+|   |       |   |-- library.js
+|   |       |   |-- react-native.js
+|   |       |   `-- wasm.js
+|   |       |-- schema.prisma
+|   |       |-- wasm.d.ts
+|   |       `-- wasm.js
+|   |-- nest-cli.json
+|   |-- package-lock.json
+|   |-- package.json
+|   |-- prisma
+|   |   |-- migrations
+|   |   |   |-- 20250501005631_init
+|   |   |   |   `-- migration.sql
+|   |   |   |-- 20250501152648_init
+|   |   |   |   `-- migration.sql
+|   |   |   |-- 20250525221644_fix_userid_types
+|   |   |   |   `-- migration.sql
+|   |   |   |-- 20250527141607_atualizacao
+|   |   |   |   `-- migration.sql
+|   |   |   `-- migration_lock.toml
+|   |   `-- schema.prisma
+|   |-- src
+|   |   |-- app.controller.ts
+|   |   |-- app.module.ts
+|   |   |-- app.service.ts
+|   |   |-- auth
+|   |   |   |-- auth.controller.ts
+|   |   |   |-- auth.module.ts
+|   |   |   |-- auth.service.ts
+|   |   |   |-- constants.ts
+|   |   |   |-- decorators
+|   |   |   |   `-- public.decorator.ts
+|   |   |   |-- dto
+|   |   |   |   `-- login.dto.ts
+|   |   |   |-- guards
+|   |   |   |   |-- jwt-auth.guard.ts
+|   |   |   |   `-- local-auth.guard.ts
+|   |   |   `-- strategies
+|   |   |       |-- jwt.strategy.ts
+|   |   |       `-- local.strategy.ts
+|   |   |-- calculator
+|   |   |   |-- calculator.controller.ts
+|   |   |   |-- calculator.module.ts
+|   |   |   `-- calculator.service.ts
+|   |   |-- categories
+|   |   |   |-- categories.controller.ts
+|   |   |   |-- categories.module.ts
+|   |   |   |-- categories.service.ts
+|   |   |   `-- dto
+|   |   |       |-- create-category.dto.ts
+|   |   |       `-- update-category.dto.ts
+|   |   |-- common
+|   |   |   |-- filters
+|   |   |   |   `-- http-exception.filter.ts
+|   |   |   `-- teste
+|   |   |-- ingredients
+|   |   |   |-- dto
+|   |   |   |   |-- create-ingredients.dto.ts
+|   |   |   |   `-- update-ingredients.dto.ts
+|   |   |   |-- ingredients.controller.ts
+|   |   |   |-- ingredients.module.ts
+|   |   |   `-- ingredients.service.ts
+|   |   |-- main.ts
+|   |   |-- prisma
+|   |   |   |-- prisma.module.ts
+|   |   |   `-- prisma.service.ts
+|   |   |-- recipes
+|   |   |   |-- dto
+|   |   |   |   |-- create-recipe.dto.ts
+|   |   |   |   `-- update-recipe.dto.ts
+|   |   |   |-- recipes.controller.ts
+|   |   |   |-- recipes.module.ts
+|   |   |   `-- recipes.service.ts
+|   |   |-- some-service.ts
+|   |   |-- suppliers
+|   |   |   |-- dto
+|   |   |   |   |-- create-supplier.dto.ts
+|   |   |   |   `-- update-supplier.dto.ts
+|   |   |   |-- suppliers.controller.ts
+|   |   |   |-- suppliers.module.ts
+|   |   |   `-- suppliers.service.ts
+|   |   `-- user
+|   |       |-- dto
+|   |       |   |-- change-password.dto.ts
+|   |       |   |-- create-user.dto.ts
+|   |       |   `-- update-user.dto.ts
+|   |       |-- entities
+|   |       |   `-- user.entity.ts
+|   |       |-- types
+|   |       |   `-- user-with-password.type.ts
+|   |       |-- user.controller.ts
+|   |       |-- user.module.ts
+|   |       `-- user.service.ts
+|   |-- tsconfig.build.json
+|   `-- tsconfig.json
+|-- estrutura.txt
+`-- frontend
+    |-- README.md
+    |-- components.json
+    |-- next.config.ts
+    |-- package-lock.json
+    |-- package.json
+    |-- postcss.config.mjs
+    |-- public
+    |   |-- file.svg
+    |   |-- globe.svg
+    |   |-- next.svg
+    |   |-- vercel.svg
+    |   `-- window.svg
+    |-- src
+    |   |-- app
+    |   |   |-- dashboard
+    |   |   |   |-- layout.tsx
+    |   |   |   |-- loading.tsx
+    |   |   |   `-- page.tsx
+    |   |   |-- favicon.ico
+    |   |   |-- financeiro
+    |   |   |   |-- layout.tsx
+    |   |   |   |-- loading.tsx
+    |   |   |   `-- page.tsx
+    |   |   |-- globals.css
+    |   |   |-- insumos
+    |   |   |   |-- layout.tsx
+    |   |   |   |-- loading.tsx
+    |   |   |   `-- page.tsx
+    |   |   |-- layout.tsx
+    |   |   |-- middleware.ts
+    |   |   |-- page.tsx
+    |   |   |-- receitas
+    |   |   |   |-- layout.tsx
+    |   |   |   |-- loading.tsx
+    |   |   |   `-- page.tsx
+    |   |   |-- register
+    |   |   |   |-- layout.tsx
+    |   |   |   `-- page.tsx
+    |   |   `-- suporte
+    |   |       |-- layout.tsx
+    |   |       |-- loading.tsx
+    |   |       `-- page.tsx
+    |   |-- components
+    |   |   |-- auth
+    |   |   |   |-- loginform.tsx
+    |   |   |   `-- protected-routes.tsx
+    |   |   |-- common
+    |   |   |   `-- api-status.tsx
+    |   |   |-- insumos
+    |   |   |   `-- insumos-form.tsx
+    |   |   |-- layout
+    |   |   |   |-- dashboard-layout.tsx
+    |   |   |   |-- header.tsx
+    |   |   |   `-- sidebar.tsx
+    |   |   |-- recipes
+    |   |   |   `-- recipe-form.tsx
+    |   |   |-- registerform.tsx
+    |   |   |-- sidebar.tsx
+    |   |   |-- support
+    |   |   |   |-- AdminSupport.tsx
+    |   |   |   |-- EnhancedSupportePage.tsx
+    |   |   |   |-- NewTicketModal.tsx
+    |   |   |   |-- TicketDetailModal.tsx
+    |   |   |   `-- UserSupport.tsx
+    |   |   `-- ui
+    |   |       `-- toaster.tsx
+    |   |-- hooks
+    |   |   |-- use-auth.tsx
+    |   |   |-- use-categories.ts
+    |   |   |-- use-ingredients.ts
+    |   |   |-- use-recipes.ts
+    |   |   `-- use-tickets.ts
+    |   |-- lib
+    |   |   |-- api.ts
+    |   |   `-- utils.ts
+    |   `-- types
+    |       |-- insumo.ts
+    |       `-- user.tsx
+    |-- tailwind.config.ts
+    `-- tsconfig.json
+
+68 directories, 158 files
