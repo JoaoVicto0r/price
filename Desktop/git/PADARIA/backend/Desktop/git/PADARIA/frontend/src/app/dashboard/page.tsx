@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!loading) {
       // Redireciona baseado no estado de autenticação
-      const targetRoute = isAuthenticated ? "/receitas" : "/login";
+      const targetRoute = isAuthenticated ? "/receitas" : "/";
       router.push(targetRoute);
       
       // Temporizador de fallback caso o redirecionamento falhe

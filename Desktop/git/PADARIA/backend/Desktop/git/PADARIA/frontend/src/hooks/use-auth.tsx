@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await api.logout();
       setUser(null);
-      router.push("/login");
+      router.push("/");
     } catch (err: any) {
       setError(err.message || "Falha ao sair");
     } finally {
