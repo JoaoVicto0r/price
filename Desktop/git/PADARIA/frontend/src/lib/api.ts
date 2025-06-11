@@ -39,44 +39,49 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
-    const headers = new Headers(options.headers || {});
-    headers.set('Accept', 'application/json');
+  const headers = new Headers(options.headers || {});
+  headers.set('Accept', 'application/json');
 
-    // Só adiciona Content-Type para métodos com corpo
-    if (options.body && ['POST', 'PUT', 'PATCH'].includes(options.method?.toUpperCase() || '')) {
-        headers.set('Content-Type', 'application/json');
-    }
+  // Adiciona o token JWT se existir
+  if (this.token) {
+    headers.set('Authorization', `Bearer ${this.token}`);
+  }
 
-    try {
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
-            ...options,
-            headers,
-            credentials: 'include', // Cookies são enviados automaticamente
-            signal: controller.signal,
-        });
+  // Só adiciona Content-Type para métodos com corpo
+  if (options.body && ['POST', 'PUT', 'PATCH'].includes(options.method?.toUpperCase() || '')) {
+      headers.set('Content-Type', 'application/json');
+  }
 
-        clearTimeout(timeout);
+  try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+          ...options,
+          headers,
+          credentials: 'include',
+          signal: controller.signal,
+      });
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                this.handleUnauthorizedError();
-                throw new Error('Sessão expirada');
-            }
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
-        }
+      clearTimeout(timeout);
 
-        return response.status === 204 ? {} as T : await response.json();
-    } catch (error) {
-        clearTimeout(timeout);
-        if (error instanceof Error && error.name === 'AbortError') {
-            throw new Error('Tempo limite excedido');
-        }
-        throw error;
-    }
+      if (!response.ok) {
+          if (response.status === 401) {
+              this.handleUnauthorizedError();
+              throw new Error('Sessão expirada');
+          }
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
+      }
+
+      return response.status === 204 ? {} as T : await response.json();
+  } catch (error) {
+      clearTimeout(timeout);
+      if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Tempo limite excedido');
+      }
+      throw error;
+  }
 }
 
   private handleUnauthorizedError() {
