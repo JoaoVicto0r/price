@@ -20,20 +20,22 @@ async function bootstrap() {
 
   // ===== Configurações de Segurança =====
   app.use(helmet());
-  app.use(cookieParser(configService.get('COOKIE_SECRET') || 'defaultSecret', {
-    httpOnly: true,
-    secure: configService.get('NODE_ENV') === 'production',
-    sameSite: configService.get('NODE_ENV') === 'production' ? 'none' : 'lax',
-  }));
+  app.use(cookieParser(configService.get('COOKIE_SECRET'), {
+  httpOnly: true,
+  secure: configService.get('NODE_ENV') === 'production',
+  sameSite: 'lax', // Mude para 'strict' se não precisar de cross-origin
+  domain: configService.get('COOKIE_DOMAIN') || 'localhost'
+}));
   app.use(compression());
 
   // Middleware de log para depuração
   app.use((req, res, next) => {
-    logger.debug(`Incoming request: ${req.method} ${req.url}`);
-    logger.debug(`Cookies: ${JSON.stringify(req.cookies)}`);
-    logger.debug(`Auth header: ${req.headers['authorization']}`);
-    next();
-  });
+  logger.debug(`Request: ${req.method} ${req.url}`);
+  logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
+  logger.debug(`Cookies: ${JSON.stringify(req.cookies)}`);
+  next();
+});
+
 
   // ===== Configuração de CORS =====
   const allowedOrigins = [
