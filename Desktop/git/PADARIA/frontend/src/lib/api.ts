@@ -42,71 +42,57 @@ class ApiClient {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
-    const headers = new Headers({
-      'Accept': 'application/json',
-      ...(options.headers || {})
-    });
+    const headers = new Headers(options.headers || {});
+    headers.set('Accept', 'application/json');
 
-    if (options.method && ["POST", "PUT", "PATCH"].includes(options.method.toUpperCase())) {
-      headers.set('Content-Type', 'application/json');
+    // Só adiciona Content-Type para métodos com corpo
+    if (options.body && ['POST', 'PUT', 'PATCH'].includes(options.method?.toUpperCase() || '')) {
+        headers.set('Content-Type', 'application/json');
     }
-{/*
-    if (this.token) {
-      headers.set('Authorization', `Bearer ${this.token}`);
-    }
-  */}
+
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
-        ...options,
-        headers,
-        credentials: 'include',
-        signal: controller.signal,
-      });
+        const response = await fetch(`${this.baseURL}${endpoint}`, {
+            ...options,
+            headers,
+            credentials: 'include', // Cookies são enviados automaticamente
+            signal: controller.signal,
+        });
 
-      clearTimeout(timeout);
+        clearTimeout(timeout);
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.handleUnauthorizedError();
+        if (!response.ok) {
+            if (response.status === 401) {
+                this.handleUnauthorizedError();
+                throw new Error('Sessão expirada');
+            }
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
         }
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
 
-      return response.status === 204 ? {} as T : await response.json();
-    } catch (error: unknown) {
-      clearTimeout(timeout);
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new Error('Request timeout');
+        return response.status === 204 ? {} as T : await response.json();
+    } catch (error) {
+        clearTimeout(timeout);
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new Error('Tempo limite excedido');
         }
         throw error;
-      }
-      throw new Error('Unknown error occurred');
     }
-  }
+}
 
   private handleUnauthorizedError() {
-    console.error('Unauthorized access - redirecting to login');
-    this.removeToken();
+    console.error('Acesso não autorizado - redirecionando');
     if (typeof window !== 'undefined') {
-      window.location.href = '/';
+        window.location.href = '/login'; // Ajuste para sua rota de login
     }
-  }
+}
 
   // Métodos de autenticação
   async login(email: string, password: string) {
-    const response = await this.request<{ 
-      access_token: string,
-      user: User 
-    }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
+    return this.request<{ user: User }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
     });
-    
-    this.setToken(response.access_token);
-    return response;
-  }
+}
 
   async register(userData: {
     name: string;
