@@ -2,33 +2,34 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, error: authError, loading } = useAuth();
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
-  
-  try {
-    const success = await login(email, password)
-    if (success) {
-      
-      return
+    e.preventDefault();
+
+    try {
+      const success = await login(email, password);
+      if (success) {
+        router.push("/dashboard");
+        return;
+      }
+    } finally {
+      setPassword("");
     }
-  } finally {
-   
-    setPassword("")
-  }
-}
+  };
 
   return (
     <div className="w-[1920px] h-[1080px] relative bg-white outline outline-1 outline-offset-[-1px] outline-zinc-300 overflow-hidden">
-      {/* Fundo e elementos decorativos (mantidos do original) */}
+      {/* Fundo e elementos decorativos */}
       <div className="w-[1920px] h-[1080px] left-0 top-0 absolute bg-indigo-500/50" />
       <div className="w-[1325px] h-[1080px] left-[648px] top-0 absolute bg-white rounded-[50px]" />
-      
+
       {/* Texto de apresentação */}
       <div className="w-[473px] h-60 left-[80px] top-[203px] absolute justify-start">
         <span className="text-white text-5xl font-normal font-['Telegraf'] leading-[60px] tracking-widest">
@@ -104,7 +105,7 @@ export default function LoginForm() {
         </div>
 
         {/* Mensagem de erro */}
-        {(authError) && (
+        {authError && (
           <div className="left-[1023px] top-[660px] absolute w-[575px] p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
             <p className="font-medium">{authError}</p>
           </div>

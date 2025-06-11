@@ -31,65 +31,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-   const loadUser = async () => {
-  const token = localStorage.getItem('token')
-  
-  if (!token) {
-    setLoading(false)
-    return
-  }
-
-  try {
-    api.setToken(token)
-    const userProfile = await api.getProfile()
-    setUser(userProfile)
-    
-    // Verificação adicional do token
-    if (!userProfile || !userProfile.id) {
-      throw new Error("Perfil de usuário inválido")
-    }
-  } catch (err: any) {
-    console.error("Erro ao carregar usuário:", err)
-    localStorage.removeItem('token')
-    api.removeToken()
-    setUser(null)
-  } finally {
-    setLoading(false)
-  }
-}
-
+    const loadUser = async () => {
+      setLoading(true);
+      try {
+        const userProfile = await api.getProfile();
+        setUser(userProfile);
+      } catch (err: any) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadUser();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-  setLoading(true);
-  setError(null);
-  try {
-    const response = await api.login(email, password);
-    
-    // Armazenamento consistente do token
-    
-    setUser(response.user);
-    
-    return true;
-  } catch (err: any) {
-    setError(err.message || "Falha no login");
-    return false;
-  } finally {
-    setLoading(false);
-  }
-};
-   
-  const register = async (userData: { 
-    name: string; 
-    email: string; 
-    password: string 
-  }): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.register(userData);
-      setUser(response.user);
+      await api.login(email, password);
+      // Após login, buscar o perfil
+      const userProfile = await api.getProfile();
+      setUser(userProfile);
+      return true;
+    } catch (err: any) {
+      setError(err.message || "Falha no login");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (userData: { name: string; email: string; password: string }): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.register(userData);
+      // Após registro, buscar o perfil
+      const userProfile = await api.getProfile();
+      setUser(userProfile);
       return true;
     } catch (err: any) {
       setError(err.message || "Falha no registro");
@@ -99,20 +79,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
- const logout = async () => {
-  setLoading(true);
-  try {
-    await api.logout();
-    setUser(null);
-    // Adicione esta linha para remover o token
-    api.removeToken();
-    router.push("/");
-  } catch (err: any) {
-    setError(err.message || "Falha ao sair");
-  } finally {
-    setLoading(false);
-  }
-};
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await api.logout();
+      setUser(null);
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Falha ao sair");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AuthContext.Provider
@@ -138,4 +116,3 @@ export function useAuth() {
   }
   return context;
 }
-  

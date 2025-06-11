@@ -12,25 +12,15 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://price-d2
 
 class ApiClient {
   private baseURL: string;
-  private token: string | null = null;
   private timeoutMs = 10000;
 
-  constructor(baseURL: string, token?: string | null) {
+  constructor(baseURL: string) {
     this.baseURL = baseURL;
-    this.token = token || null;
   }
 
-  setToken(token: string) {
-    console.log("Token setado:", token);
-    this.token = token;
-  }
-
-  removeToken() {
-    this.token = null;
-  }
+  // Não é mais necessário setToken/removeToken, pois o token é enviado via cookie
 
   async logout() {
-    this.removeToken();
     try {
       await this.request<{ message: string }>("/auth/logout", { method: "POST" });
     } catch (error) {
@@ -39,67 +29,61 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
-  const headers = new Headers(options.headers || {});
-  headers.set('Accept', 'application/json');
+    const headers = new Headers(options.headers || {});
+    headers.set('Accept', 'application/json');
 
-  // Adiciona o token JWT se existir
-  if (this.token) {
-    headers.set('Authorization', `Bearer ${this.token}`);
-  }
-
-  // Só adiciona Content-Type para métodos com corpo
-  if (options.body && ['POST', 'PUT', 'PATCH'].includes(options.method?.toUpperCase() || '')) {
+    // Só adiciona Content-Type para métodos com corpo
+    if (options.body && ['POST', 'PUT', 'PATCH'].includes(options.method?.toUpperCase() || '')) {
       headers.set('Content-Type', 'application/json');
-  }
+    }
 
-  try {
+    try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-          ...options,
-          headers,
-          credentials: 'include',
-          signal: controller.signal,
+        ...options,
+        headers,
+        credentials: 'include', // Importante para enviar cookies
+        signal: controller.signal,
       });
 
       clearTimeout(timeout);
 
       if (!response.ok) {
-          if (response.status === 401) {
-              this.handleUnauthorizedError();
-              throw new Error('Sessão expirada');
-          }
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
+        if (response.status === 401) {
+          this.handleUnauthorizedError();
+          throw new Error('Sessão expirada');
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
       }
 
       return response.status === 204 ? {} as T : await response.json();
-  } catch (error) {
+    } catch (error) {
       clearTimeout(timeout);
       if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error('Tempo limite excedido');
+        throw new Error('Tempo limite excedido');
       }
       throw error;
+    }
   }
-}
 
   private handleUnauthorizedError() {
     console.error('Acesso não autorizado - redirecionando');
     if (typeof window !== 'undefined') {
-        window.location.href = '/'; // Ajuste para sua rota de login
+      window.location.href = '/'; // Ajuste para sua rota de login
     }
-}
+  }
 
   // Métodos de autenticação
   async login(email: string, password: string) {
-  const data = await this.request<{ access_token: string; user: User }>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-  this.setToken(data.access_token);
-  return data;
-}
+    // O cookie será setado automaticamente pelo navegador
+    return this.request<{ user: User }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+  }
 
   async register(userData: {
     name: string;
@@ -107,15 +91,11 @@ class ApiClient {
     password: string;
     role?: string;
   }) {
-    const data = await this.request<{
-      access_token: string;
-      user: User;
-    }>("/auth/register", {
+    // O cookie será setado automaticamente pelo navegador
+    return this.request<{ user: User }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });
-    this.setToken(data.access_token);
-    return data;
   }
 
   // === User methods ===
@@ -338,8 +318,6 @@ export const api = new ApiClient(API_BASE_URL)
 
 
 // Types
-
-
 
 export interface Recipe {
   id: string

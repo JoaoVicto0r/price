@@ -2,17 +2,17 @@
 
 import { useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading, error } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      // Usando window.location para garantir limpeza completa do estado
-      window.location.href = "/"
-      return
+      router.replace("/") // Redireciona sem recarregar a página
     }
-  }, [isAuthenticated, loading])
+  }, [isAuthenticated, loading, router])
 
   if (loading) {
     return (
