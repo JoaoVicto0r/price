@@ -113,7 +113,7 @@ async function bootstrap() {
   }
 
   // ===== Configuração Global =====
-  app.setGlobalPrefix('api/v1');
+ // app.setGlobalPrefix('api/v1');
 
   // ===== Verificação de Variáveis =====
   const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL', 'COOKIE_SECRET'];
