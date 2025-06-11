@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { api, API_BASE_URL } from "@/lib/api";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -9,17 +10,35 @@ export default function LoginForm() {
   const { login, error: authError, loading } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
+  e.preventDefault();
   
   try {
-    const success = await login(email, password)
-    if (success) {
-      // Redirecionamento agora é tratado pelo próprio login
-      return
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Important for cookies
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Login failed");
     }
+
+    const data = await response.json();
+    
+    // Set the token in the API client and storage
+    api.setToken(data.access_token);
+    
+    // Redirect or handle successful login
+    window.location.href = "/dashboard";
+    
+  } catch (error) {
+    console.error("Login error:", error);
+    setError(error.message || "Login failed");
   } finally {
-    // Mantém o estado limpo após tentativa
-    setPassword("")
+    setPassword("");
   }
 }
 
@@ -142,4 +161,8 @@ export default function LoginForm() {
       </div>
     </div>
   );
+}
+
+function setError(arg0: any) {
+  throw new Error("Function not implemented.");
 }

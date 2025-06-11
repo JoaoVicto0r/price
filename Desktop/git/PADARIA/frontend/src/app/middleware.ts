@@ -1,80 +1,54 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
-
-// Adicione esta função de verificação
-async function verifyToken(token: string): Promise<boolean> {
-  try {
-    const response = await fetch(`${process.env.API_BASE_URL}/api/auth/verify`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      credentials: "include"
-    })
-    return response.ok
-  } catch (error) {
-    console.error("Token verification failed:", error)
-    return false
-  }
-}
-
 export async function middleware(request: NextRequest) {
-  const token = request.cookies.get("token")?.value || null
+  const token = request.cookies.get('auth_token')?.value || 
+                request.headers.get('Authorization')?.replace('Bearer ', '');
 
-  const authRoutes = ["/"]
-  const protectedRoutes = [
-    "/dashboard",
-    "/receitas",
-    "/insumos",
-    "/financeiro",
-    "/suporte"
-  ]
-
-  const isAuthRoute = authRoutes.includes(request.nextUrl.pathname)
-  const isProtectedRoute = protectedRoutes.some(path =>
-    request.nextUrl.pathname.startsWith(path)
-  )
-
-  if (isAuthRoute) {
-    if (token) {
-      // Verifique se o token é válido antes de redirecionar
-      const isValid = await verifyToken(token)
-      if (isValid) {
-        return NextResponse.redirect(new URL("/dashboard", request.url))
-      }
-      // Se inválido, limpe o cookie
-      const response = NextResponse.next()
-      response.cookies.delete("token")
-      return response
-    }
-    return NextResponse.next()
-  }
-
-  if (isProtectedRoute) {
+  // For API routes
+  if (request.nextUrl.pathname.startsWith('/api')) {
     if (!token) {
-      return NextResponse.redirect(new URL("/", request.url))
+      return new Response('Unauthorized', { status: 401 });
     }
 
-    // Verifique a validade do token
-    const isValid = await verifyToken(token)
-    if (!isValid) {
-      const response = NextResponse.redirect(new URL("/", request.url))
-      response.cookies.delete("token")
-      return response
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid token');
+      }
+
+      return NextResponse.next();
+    } catch (error) {
+      return new Response('Unauthorized', { status: 401 });
     }
   }
 
-  return NextResponse.next()
-}
+  // For page routes
+  if (protectedRoutes.some(path => request.nextUrl.pathname.startsWith(path))) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
 
-export const config = {
-  matcher: [
-    "/",
-    "/dashboard/:path*",
-    "/receitas/:path*",
-    "/insumos/:path*",
-    "/financeiro/:path*",
-    "/suporte/:path*"
-  ]
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid token');
+      }
+
+      return NextResponse.next();
+    } catch (error) {
+      const response = NextResponse.redirect(new URL('/', request.url));
+      response.cookies.delete('auth_token');
+      return response;
+    }
+  }
+
+  return NextResponse.next();
 }

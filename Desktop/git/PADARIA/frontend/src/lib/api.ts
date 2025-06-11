@@ -14,28 +14,32 @@ class ApiClient {
   private baseURL: string;
   private token: string | null = null;
   private timeoutMs = 10000;
-
+/*
   constructor(baseURL: string, token?: string | null) {
     this.baseURL = baseURL;
     this.token = token || null;
   }
-
+*/
   setToken(token: string) {
     console.log("Token setado:", token);
     this.token = token;
+    // Also store in localStorage/sessionStorage for persistence
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', token);
+    }
   }
 
   removeToken() {
     this.token = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
   }
 
-  async logout() {
-    this.removeToken();
-    try {
-      await this.request<{ message: string }>("/auth/logout", { method: "POST" });
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+  constructor(baseURL: string, token?: string | null) {
+    this.baseURL = baseURL;
+    // Initialize token from storage if available
+    this.token = token || (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null);
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

@@ -1,36 +1,57 @@
-"use client"
-
-import { useEffect } from "react"
-import { useAuth } from "@/hooks/use-auth"
-
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading, error } = useAuth()
+  const [authState, setAuthState] = useState({
+    isAuthenticated: false,
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      // Usando window.location para garantir limpeza completa do estado
-      window.location.href = "/"
-      return
-    }
-  }, [isAuthenticated, loading])
+    const verifyAuth = async () => {
+      try {
+        // Check if we have a token
+        const token = localStorage.getItem('auth_token') || api.token;
+        
+        if (!token) {
+          throw new Error("No authentication token");
+        }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
-        <div className="text-white text-xl tracking-wider">Verificando autenticação...</div>
-      </div>
-    )
+        // Verify with backend
+        const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Token verification failed");
+        }
+
+        setAuthState({
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        setAuthState({
+          isAuthenticated: false,
+          loading: false,
+          error: error.message,
+        });
+        window.location.href = "/";
+      }
+    };
+
+    verifyAuth();
+  }, []);
+
+  if (authState.loading) {
+    return <div>Loading...</div>;
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-indigo-500/50 flex items-center justify-center">
-        <div className="text-white text-xl tracking-wider">
-          Erro de autenticação: {error}
-        </div>
-      </div>
-    )
+  if (authState.error) {
+    return <div>Error: {authState.error}</div>;
   }
 
-  return isAuthenticated ? <>{children}</> : null
+  return authState.isAuthenticated ? <>{children}</> : null;
 }
