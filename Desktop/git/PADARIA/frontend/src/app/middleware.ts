@@ -1,54 +1,69 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
 export async function middleware(request: NextRequest) {
+  // Obter token do cookie ou header Authorization
   const token = request.cookies.get('auth_token')?.value || 
                 request.headers.get('Authorization')?.replace('Bearer ', '');
 
-  // For API routes
-  if (request.nextUrl.pathname.startsWith('/api')) {
-    if (!token) {
-      return new Response('Unauthorized', { status: 401 });
-    }
+  // Rotas protegidas
+  const protectedRoutes = [
+    '/dashboard',
+    '/receitas',
+    '/insumos',
+    '/financeiro',
+    '/suporte'
+  ];
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  // Verificar se a rota atual é protegida
+  const isProtectedRoute = protectedRoutes.some(path => 
+    request.nextUrl.pathname.startsWith(path)
+  );
 
-      if (!response.ok) {
-        throw new Error('Invalid token');
-      }
-
-      return NextResponse.next();
-    } catch (error) {
-      return new Response('Unauthorized', { status: 401 });
-    }
+  // Se não for rota protegida, continuar
+  if (!isProtectedRoute) {
+    return NextResponse.next();
   }
 
-  // For page routes
-  if (protectedRoutes.some(path => request.nextUrl.pathname.startsWith(path))) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid token');
-      }
-
-      return NextResponse.next();
-    } catch (error) {
-      const response = NextResponse.redirect(new URL('/', request.url));
-      response.cookies.delete('auth_token');
-      return response;
-    }
+  // Se for rota protegida e não tiver token, redirecionar para login
+  if (!token) {
+    const loginUrl = new URL('/', request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  try {
+    // Verificar token com o backend
+    const verifyResponse = await fetch(`${process.env.API_BASE_URL}/auth/verify`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Se token válido, continuar
+    if (verifyResponse.ok) {
+      return NextResponse.next();
+    }
+
+    // Se token inválido, redirecionar para login
+    throw new Error('Token inválido');
+    
+  } catch (error) {
+    // Limpar cookie e redirecionar
+    const response = NextResponse.redirect(new URL('/', request.url));
+    response.cookies.delete('auth_token');
+    return response;
+  }
 }
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+};
