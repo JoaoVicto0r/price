@@ -50,11 +50,11 @@ class ApiClient {
     if (options.method && ["POST", "PUT", "PATCH"].includes(options.method.toUpperCase())) {
       headers.set('Content-Type', 'application/json');
     }
-
+{/*
     if (this.token) {
       headers.set('Authorization', `Bearer ${this.token}`);
     }
-
+  */}
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         ...options,
@@ -90,7 +90,7 @@ class ApiClient {
     console.error('Unauthorized access - redirecting to login');
     this.removeToken();
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   }
 
