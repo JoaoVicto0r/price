@@ -82,7 +82,7 @@ class ApiClient {
   private handleUnauthorizedError() {
     console.error('Acesso não autorizado - redirecionando');
     if (typeof window !== 'undefined') {
-        window.location.href = '/login'; // Ajuste para sua rota de login
+        window.location.href = '/'; // Ajuste para sua rota de login
     }
 }
 
