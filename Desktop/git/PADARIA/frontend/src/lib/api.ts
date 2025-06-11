@@ -93,10 +93,12 @@ class ApiClient {
 
   // Métodos de autenticação
   async login(email: string, password: string) {
-    return this.request<{ user: User }>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-    });
+  const data = await this.request<{ access_token: string; user: User }>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+  this.setToken(data.access_token);
+  return data;
 }
 
   async register(userData: {
