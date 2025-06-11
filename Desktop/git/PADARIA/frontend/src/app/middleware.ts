@@ -22,7 +22,7 @@ async function verifyToken(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value || null
 
-  const authRoutes = ["/", "/login"]
+  const authRoutes = ["/"]
   const protectedRoutes = [
     "/dashboard",
     "/receitas",
@@ -53,13 +53,13 @@ export async function middleware(request: NextRequest) {
 
   if (isProtectedRoute) {
     if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url))
+      return NextResponse.redirect(new URL("/", request.url))
     }
 
     // Verifique a validade do token
     const isValid = await verifyToken(token)
     if (!isValid) {
-      const response = NextResponse.redirect(new URL("/login", request.url))
+      const response = NextResponse.redirect(new URL("/", request.url))
       response.cookies.delete("token")
       return response
     }
@@ -71,7 +71,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
-    "/login",
     "/dashboard/:path*",
     "/receitas/:path*",
     "/insumos/:path*",
