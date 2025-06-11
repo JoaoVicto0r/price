@@ -36,7 +36,7 @@ async login(
   response.cookie('auth_token', token.access_token, {
     httpOnly: true,
     secure: true, // SEMPRE true em produção
-    sameSite: 'none', // Alterado para cross-origin
+    sameSite: 'lax', // Alterado para cross-origin
     domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',

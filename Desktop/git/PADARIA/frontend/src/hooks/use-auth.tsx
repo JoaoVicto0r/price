@@ -68,8 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await api.login(email, password);
     
     // Armazenamento consistente do token
-    localStorage.setItem('token', response.access_token);
-    api.setToken(response.access_token);
+    
     setUser(response.user);
     
     return true;
@@ -80,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }
 };
-
+   
   const register = async (userData: { 
     name: string; 
     email: string; 
@@ -139,3 +138,4 @@ export function useAuth() {
   }
   return context;
 }
+  
