@@ -37,7 +37,7 @@ async function bootstrap() {
     'http://localhost:3001',
     'http://192.168.56.1:3000',
     'https://price-lyart-kappa.vercel.app',
-    'https://price-d26o.onrender.com'
+    'https://api-sable-omega.vercel.app'
   ];
 
   app.enableCors({
