@@ -1,5 +1,7 @@
 {
-    "buildCommand": "npm run build",
+    "buildCommand": "npx prisma generate && npm run build",
+    "devCommand": "npm run start:dev",
+    "startCommand": "npm run start:prod",
     "outputDirectory": "dist",
     "routes": [
         { "src": "/api/(.*)", "dest": "/api/$1.js" }
