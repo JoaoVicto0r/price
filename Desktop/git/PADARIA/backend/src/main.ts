@@ -115,6 +115,9 @@ async function bootstrap() {
     }
   });
 
+  // ===== Prefixo global para rotas =====
+  app.setGlobalPrefix('api');
+
   // ===== Inicialização do Servidor =====
   const port = configService.get('PORT') || 3333;
   await app.listen(port, '0.0.0.0');
