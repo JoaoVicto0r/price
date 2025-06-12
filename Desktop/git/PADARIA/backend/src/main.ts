@@ -13,14 +13,14 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     bufferLogs: true,
   });
-  
+
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
   app.useLogger(logger);
 
   // ===== Configurações de Segurança =====
   app.use(helmet());
-  app.use(cookieParser(configService.get('COOKIE_SECRET'))); // Removido objeto de opções com domain
+  app.use(cookieParser(configService.get('COOKIE_SECRET')));
   app.use(compression());
 
   // Middleware de log para depuração
@@ -59,8 +59,8 @@ async function bootstrap() {
       'Set-Cookie'
     ],
     exposedHeaders: [
-      'Authorization', 
-      'Set-Cookie', 
+      'Authorization',
+      'Set-Cookie',
       'X-Total-Count',
       'X-Refresh-Token'
     ],
@@ -98,16 +98,13 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api-docs', app, document, {
       swaggerOptions: {
-        withCredentials: true, // Permite enviar cookies
+        withCredentials: true,
         persistAuthorization: true,
         tagsSorter: 'alpha',
         operationsSorter: 'method',
       },
     });
   }
-
-  // ===== Configuração Global =====
-  // app.setGlobalPrefix('api/v1');
 
   // ===== Verificação de Variáveis =====
   const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL', 'COOKIE_SECRET'];
@@ -130,6 +127,7 @@ async function bootstrap() {
   logger.log(`🛡️  CORS habilitado para: ${allowedOrigins.join(', ')}`);
 }
 
+// Sempre rode o bootstrap, tanto local quanto na Vercel
 bootstrap().catch((err) => {
   console.error('Falha crítica na inicialização:', err);
   process.exit(1);
