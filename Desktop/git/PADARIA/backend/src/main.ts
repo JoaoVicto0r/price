@@ -20,22 +20,16 @@ async function bootstrap() {
 
   // ===== Configurações de Segurança =====
   app.use(helmet());
-  app.use(cookieParser(configService.get('COOKIE_SECRET'), {
-  httpOnly: true,
-  secure: configService.get('NODE_ENV') === 'production',
-  sameSite: 'lax', // Mude para 'strict' se não precisar de cross-origin
-  domain: configService.get('COOKIE_DOMAIN') || 'localhost'
-}));
+  app.use(cookieParser(configService.get('COOKIE_SECRET'))); // Removido objeto de opções com domain
   app.use(compression());
 
   // Middleware de log para depuração
   app.use((req, res, next) => {
-  logger.debug(`Request: ${req.method} ${req.url}`);
-  logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
-  logger.debug(`Cookies: ${JSON.stringify(req.cookies)}`);
-  next();
-});
-
+    logger.debug(`Request: ${req.method} ${req.url}`);
+    logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
+    logger.debug(`Cookies: ${JSON.stringify(req.cookies)}`);
+    next();
+  });
 
   // ===== Configuração de CORS =====
   const allowedOrigins = [
@@ -113,7 +107,7 @@ async function bootstrap() {
   }
 
   // ===== Configuração Global =====
- // app.setGlobalPrefix('api/v1');
+  // app.setGlobalPrefix('api/v1');
 
   // ===== Verificação de Variáveis =====
   const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL', 'COOKIE_SECRET'];
