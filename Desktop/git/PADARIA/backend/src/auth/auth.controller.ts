@@ -37,7 +37,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      domain: process.env.COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined),
+      domain: process.env.COOKIE_DOMAIN || undefined, // Use apenas a variável de ambiente
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
@@ -69,7 +69,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      domain: process.env.COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined),
+      domain: process.env.COOKIE_DOMAIN || undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
@@ -83,7 +83,7 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('auth_token', {
       path: '/',
-      domain: process.env.COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined),
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
     return { message: 'Logout realizado com sucesso' };
   }
