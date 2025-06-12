@@ -106,7 +106,7 @@ class ApiClient {
       email: string
       name: string
       role: string
-    }>("/users/profile")
+    }>("/auth/profile")
   }
 
   async getUserStats() {
